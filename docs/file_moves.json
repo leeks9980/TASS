@@ -1,0 +1,326 @@
+[
+  {
+    "source": "analyze_fly_failure.py",
+    "destination": "src/analyze_fly_failure.py",
+    "bytes": 5374,
+    "sha256": "1457a9c8fd75caea3f982470cad8a585dd360c608dd6d1827afaed33b8bb1414"
+  },
+  {
+    "source": "analyze_fly_recording.cmd",
+    "destination": "scripts/analyze_fly_recording.cmd",
+    "bytes": 405,
+    "sha256": "5245b913b4d727e7d58720f87091728aabc693d677e9dbe7128124e109cce894"
+  },
+  {
+    "source": "analyze_fly_recording.py",
+    "destination": "src/analyze_fly_recording.py",
+    "bytes": 9982,
+    "sha256": "49eb9cdd1beaec428209ee77c4eee99475d991636396f70e2bf478bd16147ca8"
+  },
+  {
+    "source": "analyze_full_cns.cmd",
+    "destination": "scripts/analyze_full_cns.cmd",
+    "bytes": 370,
+    "sha256": "e5d2c4299695d4f3f94a3f2afca4420f825cdcf3d3a82db531acbfb5075d2e02"
+  },
+  {
+    "source": "analyze_full_cns.py",
+    "destination": "src/analyze_full_cns.py",
+    "bytes": 7030,
+    "sha256": "26396f33ded571c7dbfbd75c809db765d700ac4df24f25d04d830e1cc164d913"
+  },
+  {
+    "source": "analyze_muscle_recording.py",
+    "destination": "src/analyze_muscle_recording.py",
+    "bytes": 17135,
+    "sha256": "22641c5b537c154bbfa76c0b65b687e7c34eff9c2432f73e9b4bb7cbf4779189"
+  },
+  {
+    "source": "circuit_sim_browser.py",
+    "destination": "src/circuit_sim_browser.py",
+    "bytes": 10253,
+    "sha256": "35be15baa9618606ea34b74bb43f37f0af424ee9ac91b2ef576a16efef3141e3"
+  },
+  {
+    "source": "circuit_sim_gui.py",
+    "destination": "src/circuit_sim_gui.py",
+    "bytes": 80,
+    "sha256": "4163188738deea5a6f99120f2ede6630f85f5d091e0f36545dd0acd5d283a93d"
+  },
+  {
+    "source": "circuit_sim_model.py",
+    "destination": "src/circuit_sim_model.py",
+    "bytes": 8154,
+    "sha256": "3cea0687b97e27114eb2662aca51c523005bcce6839908fa1c59e74588299593"
+  },
+  {
+    "source": "download_all_cns.cmd",
+    "destination": "scripts/download_all_cns.cmd",
+    "bytes": 266,
+    "sha256": "30819c4c4361527d098fef130b8a93897d0f7ee19a861c7ae7113dbdfdb66af7"
+  },
+  {
+    "source": "download_connectome.py",
+    "destination": "src/download_connectome.py",
+    "bytes": 4213,
+    "sha256": "92e04807f4113d7b3ce2405cc8ecbe4114d2cc9836d53592e6c3c17b5dcea425"
+  },
+  {
+    "source": "explain_fly_recording.py",
+    "destination": "src/explain_fly_recording.py",
+    "bytes": 3283,
+    "sha256": "2ec13d2e7ad2bea4ad996fb4f8ab68f0887453d3f93fdd1c02e5f541c364305e"
+  },
+  {
+    "source": "extract_visual_leg_circuit.py",
+    "destination": "src/extract_visual_leg_circuit.py",
+    "bytes": 12264,
+    "sha256": "38f4e1a93adf8ba35f4bcdbd4b993a3c393e56c9e3f4b48542828050280322da"
+  },
+  {
+    "source": "find_CNS.py",
+    "destination": "src/find_CNS.py",
+    "bytes": 11557,
+    "sha256": "683c50aaa052cd4632d8765d23a399e52b4e0e32cd46990ead76578007266624"
+  },
+  {
+    "source": "find_DN.py",
+    "destination": "src/find_DN.py",
+    "bytes": 7408,
+    "sha256": "750c6ace8aecfe631d2ade2df3a72b358e3b523a152cbf64aa526b8d05eab6a6"
+  },
+  {
+    "source": "fly_motor_decoder.py",
+    "destination": "src/fly_motor_decoder.py",
+    "bytes": 7520,
+    "sha256": "65dd78af25bfb6daffbe34a0693f79ec078c640d19655253f168f52d50839735"
+  },
+  {
+    "source": "fly_motor_mapping.json",
+    "destination": "config/fly_motor_mapping.json",
+    "bytes": 15368,
+    "sha256": "ef2645fc773a7d7191698d26d9dcdcd597704c000b9bf12dc2db718fce09de26"
+  },
+  {
+    "source": "full_cns_arena.xml",
+    "destination": "models/full_cns_arena.xml",
+    "bytes": 2525,
+    "sha256": "1a5be579a7bc01ab6964294b3c423e0c336840ed957ebeeda3d14665e67d3ded"
+  },
+  {
+    "source": "full_cns_error.log",
+    "destination": "logs/full_cns_error.log",
+    "bytes": 506,
+    "sha256": "da1356d7cd16a80f903d5a0c911f019f46489372b299102100792371adb3c786"
+  },
+  {
+    "source": "full_cns_model.py",
+    "destination": "src/full_cns_model.py",
+    "bytes": 6905,
+    "sha256": "728cd4915d9649a1df0bf1c48805f40c761e4a31c150f6b3350f59d8ddf56ce0"
+  },
+  {
+    "source": "full_cns_muscle_arena.xml",
+    "destination": "models/full_cns_muscle_arena.xml",
+    "bytes": 3853,
+    "sha256": "554c32c27360fedfdd1d570e60747df82b9a05566ceee244a4f8fa0c53f98c26"
+  },
+  {
+    "source": "full_cns_muscle_gui.py",
+    "destination": "src/full_cns_muscle_gui.py",
+    "bytes": 7070,
+    "sha256": "858af157322fab58a637aeb7f231a3a167821994d3963eb5753055004ea91ef6"
+  },
+  {
+    "source": "full_cns_muscles.py",
+    "destination": "src/full_cns_muscles.py",
+    "bytes": 5802,
+    "sha256": "b4190e558cb25a494d2aa39c956b339d8fa56ef3e3b96c14b2c96752960e8333"
+  },
+  {
+    "source": "full_cns_recording.py",
+    "destination": "src/full_cns_recording.py",
+    "bytes": 3945,
+    "sha256": "068051e60d4125cfd00ff051568bfaecc22f48a45649d9565dec95e4f71369ae"
+  },
+  {
+    "source": "FULL_CNS_TIBIA_RIG.md",
+    "destination": "docs/FULL_CNS_TIBIA_RIG.md",
+    "bytes": 14696,
+    "sha256": "3ccaace765140abbab9f503813d535632117debacbe743dfd88e0c7af47bf561"
+  },
+  {
+    "source": "FULL_CNS.md",
+    "destination": "docs/FULL_CNS.md",
+    "bytes": 13482,
+    "sha256": "8f3989b4c4516dc617ea1f57cfdf6ea95ef008a59a098749a7ffc10607850d37"
+  },
+  {
+    "source": "full_fly_gui.py",
+    "destination": "src/full_fly_gui.py",
+    "bytes": 7904,
+    "sha256": "baa77223e040154907f7649d46f7ea6ff28bc8a28e2fd1bdd88ae9783d017961"
+  },
+  {
+    "source": "inspect_fly_body_settings.py",
+    "destination": "src/inspect_fly_body_settings.py",
+    "bytes": 1821,
+    "sha256": "2ede32907cf5b723cd8f1c5931daf3229b27541e2244a07cfe1986fb9dd33e56"
+  },
+  {
+    "source": "inspect_recorded_run.py",
+    "destination": "src/inspect_recorded_run.py",
+    "bytes": 12388,
+    "sha256": "567a60c42eea8f0fd9a0d15e0f2e80dc3cacd3a1e9fc58732891c1f9f615ec08"
+  },
+  {
+    "source": "install_navigation.cmd",
+    "destination": "scripts/install_navigation.cmd",
+    "bytes": 334,
+    "sha256": "642c0217c2fc2952b453c57cf0d24d3ce2c22eacea8d9ca2b43cd865f9096e87"
+  },
+  {
+    "source": "male_cns_all_neurons.csv",
+    "destination": "data/legacy/male_cns_all_neurons.csv",
+    "bytes": 567664164,
+    "sha256": "a40e45c7b3c445db9535b4ac7c28c0363a53e7de1e589ee7dc9c3c7e7524ae38"
+  },
+  {
+    "source": "mujoco_full_cns.py",
+    "destination": "src/mujoco_full_cns.py",
+    "bytes": 15621,
+    "sha256": "8c12f171da288663a17f7846f1590be6364dd142000223b5cfb4817cb2ca05bd"
+  },
+  {
+    "source": "mujoco_full_fly.py",
+    "destination": "src/mujoco_full_fly.py",
+    "bytes": 28376,
+    "sha256": "805ff4ac03367828a24118e813c002d649c1a9e96d4ca5becb49d807fbc03954"
+  },
+  {
+    "source": "MUJOCO_LOG.TXT",
+    "destination": "logs/MUJOCO_LOG.TXT",
+    "bytes": 487,
+    "sha256": "5cb4c6ecd679e889f72700461dbbd4c9b624945df5edbdb446c9dc5ec15c0eab"
+  },
+  {
+    "source": "mujoco_navigation.py",
+    "destination": "src/mujoco_navigation.py",
+    "bytes": 8919,
+    "sha256": "b527ca30ce1da5af9f90653abd0602fd5518379a4159cd1b53073be7d226d09d"
+  },
+  {
+    "source": "navigation_arena.xml",
+    "destination": "models/navigation_arena.xml",
+    "bytes": 2784,
+    "sha256": "9336aa7e9c13fca18198f15dc9df31c7d6048042c79914723d3a749a503290ce"
+  },
+  {
+    "source": "navigation_model.py",
+    "destination": "src/navigation_model.py",
+    "bytes": 6216,
+    "sha256": "a289702d187746f13fe1c55f97fb1e01ddc5bc3416765b1f4b8cb9927d7282d1"
+  },
+  {
+    "source": "prepare_fly_body.py",
+    "destination": "src/prepare_fly_body.py",
+    "bytes": 12172,
+    "sha256": "25e169564c35d5bca5351160269a23fab4357bb4ee8e26e6023add83a66f9b4f"
+  },
+  {
+    "source": "prepare_full_cns.py",
+    "destination": "src/prepare_full_cns.py",
+    "bytes": 5890,
+    "sha256": "b1eeb35dab0805273befd82041cfd447618693e2a26aaf6cce2d085765b59761"
+  },
+  {
+    "source": "prepare_navigation_circuit.py",
+    "destination": "src/prepare_navigation_circuit.py",
+    "bytes": 4122,
+    "sha256": "3aeea54e0f89a856eb579ccbf1bc3da931776edc6503db21361e3e52166cf51a"
+  },
+  {
+    "source": "public_data_inventory.json",
+    "destination": "data/public_data_inventory.json",
+    "bytes": 1676,
+    "sha256": "933f7eacb0589b939b91c5119581280a03702f8b66b58542ea1e5762c1f9041c"
+  },
+  {
+    "source": "replay_fly_recording.cmd",
+    "destination": "scripts/replay_fly_recording.cmd",
+    "bytes": 403,
+    "sha256": "adbd50628d4c3f09847c28663d6a6c850babd69e1460353eed8d04db352d1b6e"
+  },
+  {
+    "source": "replay_fly_recording.py",
+    "destination": "src/replay_fly_recording.py",
+    "bytes": 5616,
+    "sha256": "1c0f60944c08c4926e3279b5bd410ca53aa9141ee4fb1a9a640aed9db89feb0b"
+  },
+  {
+    "source": "Restore_Path.py",
+    "destination": "src/Restore_Path.py",
+    "bytes": 5734,
+    "sha256": "0850d015ab0a7dade010d7b1e283e64fb0fa86102e9283e269fedee692fa64ae"
+  },
+  {
+    "source": "run_full_cns.cmd",
+    "destination": "scripts/run_full_cns.cmd",
+    "bytes": 832,
+    "sha256": "2c6050d39cd4d2af40e472d7f3ad3616b3ac2fd3d01d84f93587aad48156a04d"
+  },
+  {
+    "source": "run_muscle_rig.cmd",
+    "destination": "scripts/run_muscle_rig.cmd",
+    "bytes": 287,
+    "sha256": "29561230b583d4a9aca2ea582e761ec75b8a6e7421840c5e022fa807d852faea"
+  },
+  {
+    "source": "run_simulation.cmd",
+    "destination": "scripts/run_simulation.cmd",
+    "bytes": 274,
+    "sha256": "4c757d4627bb545b45ce5394c91c91ca8322a1be13aea59b6eccee0ef9875059"
+  },
+  {
+    "source": "run_simulation.ps1",
+    "destination": "scripts/run_simulation.ps1",
+    "bytes": 552,
+    "sha256": "19b2dd3018de8022f774e8d5d2b2ae879073c01bfe5840e0dc8968d27e7ae646"
+  },
+  {
+    "source": "select_leg_targets.py",
+    "destination": "src/select_leg_targets.py",
+    "bytes": 2186,
+    "sha256": "974cfe69b35ba87e6dfc4f54449a4dc93e4d9e42b0cd7a0b82704b9b124a348c"
+  },
+  {
+    "source": "simulation.html",
+    "destination": "web/simulation.html",
+    "bytes": 16766,
+    "sha256": "62257cf734187856e1dd88fec2d534dcd5e1511b8fb6094ea128fc6526b0ddb7"
+  },
+  {
+    "source": "test_circuit_extraction.py",
+    "destination": "tests/test_circuit_extraction.py",
+    "bytes": 3895,
+    "sha256": "ee0a40d1d2e59a6f1805fb6f10fdae3106fd2ee48ebac213f8146b4390ee6498"
+  },
+  {
+    "source": "test_circuit_sim.py",
+    "destination": "tests/test_circuit_sim.py",
+    "bytes": 2695,
+    "sha256": "24ff8fbdf60e47fea87a06bfa0b551b1cd4d0c30098242a70e41505a2623dc73"
+  },
+  {
+    "source": "trace_full_cns.py",
+    "destination": "src/trace_full_cns.py",
+    "bytes": 8775,
+    "sha256": "38f0a647d92c5cae778a76f3210e1b083a795483a93da0e47e23bda6e83fa73a"
+  },
+  {
+    "source": "write_recorded_report.py",
+    "destination": "src/write_recorded_report.py",
+    "bytes": 13050,
+    "sha256": "6ad6cae90dd33c259d4bbe58db00895054c8f4e351b0cf226ff0f07752a83052"
+  }
+]

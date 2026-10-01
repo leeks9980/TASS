@@ -1,0 +1,17 @@
+.deps/
+__pycache__/
+data/*
+!data/public_data_inventory.json
+circuit_extract/
+simulation_logs/
+navigation_circuit/
+full_cns/
+full_cns_error.log
+logs/
+MUJOCO_LOG.TXT
+L2_downstream_trace/
+.env
+.env.*
+*.pem
+*.key
+*.pyc
