@@ -14,6 +14,12 @@ def analyze(run):
     model = mujoco.MjModel.from_binary_path(str(run / 'body_model.mjb'))
     failure = json.loads((run / 'failure.json').read_text(encoding='utf-8'))
     with np.load(run / 'failure_body.npz') as snapshot:
+        if 'physics_time_s' not in snapshot.files or not len(snapshot['physics_time_s']):
+            result = {'failure': failure, 'physics_steps_saved': 0,
+                      'note': 'First substep failed; no valid interval history. Raw failure state is retained.'}
+            (run / 'failure_analysis.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return
         times = snapshot['physics_time_s']
         acceleration = snapshot['physics_qacc']
         velocity = snapshot['physics_qvel']

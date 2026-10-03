@@ -28,6 +28,11 @@ CASES = ('neutral', 'bright', 'dim', 'move_left', 'move_right', 'approach', 'fre
 BAD_WARNINGS = ('mjWARN_INERTIA', 'mjWARN_BADQPOS', 'mjWARN_BADQVEL', 'mjWARN_BADQACC', 'mjWARN_BADCTRL')
 
 
+def bad_values(values):
+    """Same magnitude boundary as MuJoCo, including finite but exploded values."""
+    return bool(np.any(~np.isfinite(values)) or np.any(np.abs(values) > mujoco.mjMAXVAL))
+
+
 def named(model, kind, name):
     index = mujoco.mj_name2id(model, kind, name)
     if index < 0:
@@ -162,6 +167,12 @@ class PhysicsTrace:
 
 def physics_failure(output, model, data, circuit, decoder, rgb, trace, before, episode, case):
     """Preserve the failed substep separately; never label it a completed valid frame."""
+    if (output / 'failure.json').exists():
+        archive = output / 'failures' / datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        archive.mkdir(parents=True)
+        for filename in ('failure.json', 'failure_body.npz', 'failure_neural_state.npy'):
+            if (output / filename).exists():
+                (output / filename).rename(archive / filename)
     warnings = []
     for name in BAD_WARNINGS:
         slot = int(getattr(mujoco.mjtWarning, name))
@@ -174,6 +185,15 @@ def physics_failure(output, model, data, circuit, decoder, rgb, trace, before, e
                 joint = int(np.searchsorted(model.jnt_qposadr, index, side='right')-1)
                 joint_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, joint)
             warnings.append({'type': name, 'count': int(warning.number), 'index': index, 'joint': joint_name})
+    if not warnings:
+        for label, values in (('qacc', data.qacc), ('qvel', data.qvel), ('qpos', data.qpos)):
+            invalid = np.flatnonzero(~np.isfinite(values) | (np.abs(values) > mujoco.mjMAXVAL))
+            if len(invalid):
+                index = int(invalid[0])
+                joint = (int(model.dof_jntid[index]) if label != 'qpos' else
+                         int(np.searchsorted(model.jnt_qposadr, index, side='right')-1))
+                warnings.append({'type': 'invalid_' + label, 'source': 'local MuJoCo magnitude-bound check',
+                                 'index': index, 'joint': mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, joint)})
     arrays = dict(qpos=data.qpos.copy(), qvel=data.qvel.copy(), qacc=data.qacc.copy(), ctrl=data.ctrl.copy(),
                   qfrc_passive=data.qfrc_passive.copy(), qfrc_actuator=data.qfrc_actuator.copy(),
                   rgb=rgb, channel_activity=decoder.raw.copy(), channel_force_uN=decoder.forces.copy(),
@@ -206,6 +226,14 @@ def run(args):
                       leak=args.leak, weight_mode=args.weight_mode)
     decoder = FlyMotorDecoder(circuit.frame, args.mapping, args.activity_scale, args.muscle_force_uN, args.muscle_tau)
     model = mujoco.MjModel.from_xml_path(str(DEST / 'arena.xml'))
+    physics = body_manifest.get('physics_assumptions')
+    if physics is None:
+        raise ValueError('몸체 설정이 이전 버전입니다. run_mujoco.cmd로 새 XML을 준비하세요.')
+    for name in body_manifest['stabilized_foot_joint_names']:
+        joint = named(model, mujoco.mjtObj.mjOBJ_JOINT, name)
+        dof = int(model.jnt_dofadr[joint])
+        model.dof_damping[dof] = max(float(model.dof_damping[dof]),
+                                    physics['distal_foot']['minimum_damping_nNm_s_per_rad'])
     # Stop on the first bad state and retain diagnostics rather than losing them to auto reset.
     model.opt.disableflags |= int(mujoco.mjtDisableBit.mjDSBL_AUTORESET)
     data = mujoco.MjData(model)
@@ -229,6 +257,7 @@ def run(args):
             commands.append(key)
     renderer = panel = None
     case, episode, paused, first_person = args.case, 0, True, False
+    fault_message = ''
     neutral_frames = {}
     path_mm, previous_xy = 0., data.xpos[root, :2].copy()
     def observation():
@@ -246,7 +275,8 @@ def run(args):
         shutil.copy2(args.mapping, output / 'motor_mapping.json')
         source_folder = output / 'source'
         source_folder.mkdir()
-        for filename in ('mujoco_full_fly.py', 'full_cns_model.py', 'fly_motor_decoder.py', 'full_cns_recording.py'):
+        for filename in ('mujoco_full_fly.py', 'full_cns_model.py', 'fly_motor_decoder.py',
+                         'full_cns_recording.py', 'prepare_fly_body.py', 'full_fly_gui.py'):
             shutil.copy2(ROOT / 'src' / filename, source_folder / filename)
         mujoco.mj_saveModel(model, str(output / 'body_model.mjb'), None)
         np.save(output / 'initial_qpos.npy', data.qpos)
@@ -271,7 +301,7 @@ def run(args):
             'joint_axes_local': model.jnt_axis.tolist(),
             'compiled_joint_stiffness_nNm_per_rad': model.jnt_stiffness.tolist(),
             'compiled_dof_damping_native': model.dof_damping.tolist(),
-            'numerical_failure_policy': 'Auto reset disabled; stop on new numerical warning and save failure body/neural states.',
+            'numerical_failure_policy': 'Auto reset disabled; archive failure and pause with last completed body frame. Reset required to resume.',
             'body_root_id': root, 'floor_geom_id': floor, 'foot_body_ids': foot_bodies,
             'generalized_force_units': 'Free-root translation uN; free-root rotation and all hinge DoFs nNm. Direct hinge actuator_force nNm.',
             'sensory_input': 'One camera to existing L1/L2/L3 engineering adapter. Other sensory neurons retained, not externally driven.',
@@ -309,11 +339,13 @@ def run(args):
                     commands.clear()
                 for key in keys:
                     if key == 32:
-                        paused = not paused
+                        if not fault_message:
+                            paused = not paused
                     elif key == ord('R') or ord('1') <= key <= ord('7'):
                         if key != ord('R'):
                             case = CASES[key-ord('1')]
                         reset_body(model, data, body_manifest, root, free_joint, foot_geoms)
+                        fault_message = ''
                         circuit.reset()
                         decoder.reset()
                         episode += 1
@@ -328,6 +360,11 @@ def run(args):
                             viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED if first_person else mujoco.mjtCamera.mjCAMERA_TRACKING
                             viewer.cam.fixedcamid = named(model, mujoco.mjtObj.mjOBJ_CAMERA, 'eye')
                             viewer.cam.trackbodyid = root
+                if fault_message:
+                    panel.set_status(case, True, recorder.count, data.time, fault_message)
+                    viewer.sync()
+                    time.sleep(.02)
+                    continue
                 stimulus = environment(model, data, case, float(data.time), args.stimulus_onset)
                 mujoco.mj_forward(model, data)
                 panel.set_status(case, paused, recorder.count, data.time)
@@ -347,6 +384,12 @@ def run(args):
                 neural_ms = (time.perf_counter()-neural_started)*1000
                 decoder.observe(circuit.state)
                 trace = PhysicsTrace()
+                # Capture complete integration state, including warmstart, for display rollback.
+                state_spec = mujoco.mjtState.mjSTATE_INTEGRATION
+                display_state = np.empty(mujoco.mj_stateSize(model, state_spec))
+                mujoco.mj_getState(model, data, display_state, state_spec)
+                input_path, input_xy = path_mm, previous_xy.copy()
+                physics_started = time.perf_counter()
                 for _ in range(substeps):
                     environment(model, data, case, float(data.time), args.stimulus_onset)
                     data.ctrl[actuators] = decoder.advance(float(model.opt.timestep))
@@ -354,18 +397,39 @@ def run(args):
                     counts_before = {name: int(data.warning[int(getattr(mujoco.mjtWarning, name))].number) for name in BAD_WARNINGS}
                     mujoco.mj_step(model, data)
                     bad = [name for name in BAD_WARNINGS if data.warning[int(getattr(mujoco.mjtWarning, name))].number > counts_before[name]]
-                    if bad or data.time <= before['time'] or not np.isfinite(data.qpos).all() or not np.isfinite(data.qvel).all():
+                    if bad or data.time <= before['time'] or bad_values(data.qpos) or bad_values(data.qvel):
                         warnings = physics_failure(output, model, data, circuit, decoder, rgb, trace, before, episode, case)
-                        raise FloatingPointError(f'물리 계산 불안정: {warnings}; 상세 기록: {output / "failure.json"}')
+                        fault_message = f'가상 {data.time:.4f}s 수치 오류: {warnings} — R 또는 조건 선택으로 초기화'
+                        break
                     mujoco.mj_forward(model, data)
                     bad = [name for name in BAD_WARNINGS if data.warning[int(getattr(mujoco.mjtWarning, name))].number > counts_before[name]]
-                    if bad or not np.isfinite(data.qacc).all():
+                    if bad or bad_values(data.qacc):
                         warnings = physics_failure(output, model, data, circuit, decoder, rgb, trace, before, episode, case)
-                        raise FloatingPointError(f'물리 상태 갱신 불안정: {warnings}; 상세 기록: {output / "failure.json"}')
+                        fault_message = f'가상 {data.time:.4f}s 수치 오류: {warnings} — R 또는 조건 선택으로 초기화'
+                        break
                     contact_items, _ = contacts(model, data, floor)
                     trace.append(model, data, decoder, contact_items)
                     path_mm += float(np.linalg.norm(data.xpos[root, :2]-previous_xy))
                     previous_xy = data.xpos[root, :2].copy()
+                    if len(trace.samples) % 50 == 0:
+                        panel.pump()
+                        if panel.closed or not viewer.is_running():
+                            break
+                        viewer.sync()
+                physics_ms = (time.perf_counter()-physics_started)*1000
+                if panel.closed or not viewer.is_running():
+                    break
+                if fault_message:
+                    error_log = ROOT / 'logs' / 'full_cns_error.log'
+                    error_log.parent.mkdir(parents=True, exist_ok=True)
+                    error_log.write_text(f'{fault_message}\n상세 기록: {output / "failure.json"}\n', encoding='utf-8')
+                    print(f'{fault_message}; 기록: {output / "failure.json"}', flush=True)
+                    mujoco.mj_setState(model, data, display_state, state_spec)
+                    environment(model, data, case, input_time, args.stimulus_onset)
+                    mujoco.mj_forward(model, data)
+                    path_mm, previous_xy, paused = input_path, input_xy, True
+                    panel.set_status(case, True, recorder.count, data.time, fault_message)
+                    continue
                 if not np.isfinite(data.qpos).all() or not np.isfinite(data.qvel).all():
                     raise FloatingPointError('몸체 수치 상태가 유한하지 않습니다. 활동 기준/힘 설정을 확인하세요.')
                 decoded, body, feet, contact_items = observation()
@@ -383,6 +447,7 @@ def run(args):
                     'neutral_reference_episode': reference['episode'] if reference else None,
                     'neutral_angle_difference_rad': (np.asarray(decoded['angle_rad'])-np.asarray(reference['outputs']['angle_rad'])).tolist() if reference else None,
                     'neural_compute_ms': neural_ms,
+                    'physics_trace_ms': physics_ms,
                     'compute_ms_excluding_record': (time.perf_counter()-start)*1000,
                 }
                 arrays = trace.arrays()

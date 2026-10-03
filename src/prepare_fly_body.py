@@ -57,6 +57,15 @@ def get_file(remote, local, offline):
 
 
 def prepare(offline=False):
+    physics = json.loads((ROOT / 'config' / 'fly_physics.json').read_text(encoding='utf-8'))
+    foot = physics['distal_foot']
+    values = [physics['passive_time_constant_s'], physics['passive_damping_ratio'],
+              foot['armature_g_mm2'], foot['minimum_damping_nNm_s_per_rad'],
+              foot['excursion_from_initial_rad']]
+    if any(not isinstance(x, (int, float)) or not math.isfinite(x) or x <= 0 for x in values):
+        raise ValueError('fly_physics.json의 안정화 수치는 유한한 양수여야 합니다.')
+    if not foot['suffixes'] or not set(foot['suffixes']) <= {'Tarsus2', 'Tarsus3', 'Tarsus4', 'Tarsus5'}:
+        raise ValueError('수동 발마디 안정화는 Tarsus2~5에만 적용할 수 있습니다.')
     upstream = DEST / 'upstream'
     inventory = DEST / 'v1_source_tree.json'
     if not inventory.exists() and not offline:
@@ -151,10 +160,18 @@ def prepare(offline=False):
             joint.set('springref', str(rest[name]))
         # Equal absolute stiffness is unsafe for antenna/foot joints with tiny inertia.
         # MuJoCo derives per-joint k and damping from inertia at its reference pose.
-        joint.set('springdamper', '0.02 1')
+        joint.set('springdamper', f"{physics['passive_time_constant_s']} {physics['passive_damping_ratio']}")
         joint.attrib.pop('stiffness', None)
         joint.attrib.pop('damping', None)
-        joint.set('limited', 'false')  # No fabricated joint stops; record all rotations.
+        joint.set('limited', 'false')  # Keep upstream freedom outside explicit diagnostic foot bounds.
+        if name in {'joint_' + leg + suffix for leg in LEGS for suffix in foot['suffixes']}:
+            # Explicit diagnostic assumptions, not recovered anatomical limits.
+            center, excursion = rest[name], foot['excursion_from_initial_rad']
+            joint.set('armature', str(foot['armature_g_mm2']))
+            # Apply the additional damping floor after compilation so springdamper
+            # cannot override it. The compiled MJB records the resulting setting.
+            joint.set('limited', 'true')
+            joint.set('range', f'{center-excursion} {center+excursion}')
     actuators = root.find('actuator')
     for element in list(actuators):
         actuators.remove(element)
@@ -179,7 +196,9 @@ def prepare(offline=False):
     xml_path = DEST / 'arena.xml'
     tree.write(xml_path, encoding='utf-8', xml_declaration=True)
     report = {
-        'composition_schema': 3,
+        'composition_schema': 4,
+        'physics_assumptions': physics,
+        'stabilized_foot_joint_names': ['joint_' + leg + suffix for leg in LEGS for suffix in foot['suffixes']],
         'repository': 'https://github.com/NeLy-EPFL/flygym', 'tag': 'v1.2.1', 'commit': COMMIT,
         'license': 'Apache-2.0; upstream/LICENSE', 'files': files,
         'derived_xml_sha256': hashlib.sha256(xml_path.read_bytes()).hexdigest(),
@@ -194,7 +213,7 @@ def prepare(offline=False):
                     'initial pose from published static tripod pose; never replayed as gait',
                     'inertia-scaled passive springs/damping: springdamper 0.02s 1; uncalibrated',
                     'head/antenna Euler hinge triples converted to balls; 3 rotational DoFs preserved',
-                    'original leg articulation preserved; no fabricated joint stops',
+                    'original leg axes preserved; explicit diagnostic distal-foot limits and armature',
                     'floor and stimulus contact enabled; inter-body self collisions disabled',
                     'one forward camera and controlled target/light', 'full implicit integrator including velocity derivatives'],
         'boundary': 'Public geometry/body physics plus engineering motor adapter; not a recovered biological muscle model.',
