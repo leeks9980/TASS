@@ -1,0 +1,708 @@
+{
+  "schema": 1,
+  "status": "engineering hypotheses; not anatomically calibrated",
+  "channels": [
+    {
+      "name": "LF:promotor",
+      "leg": "LF",
+      "function": "promotor"
+    },
+    {
+      "name": "LF:remotor",
+      "leg": "LF",
+      "function": "remotor"
+    },
+    {
+      "name": "LF:anterior_rotator",
+      "leg": "LF",
+      "function": "anterior_rotator"
+    },
+    {
+      "name": "LF:posterior_rotator",
+      "leg": "LF",
+      "function": "posterior_rotator"
+    },
+    {
+      "name": "LF:adductor",
+      "leg": "LF",
+      "function": "adductor"
+    },
+    {
+      "name": "LF:tr_flexor",
+      "leg": "LF",
+      "function": "tr_flexor"
+    },
+    {
+      "name": "LF:tr_extensor",
+      "leg": "LF",
+      "function": "tr_extensor"
+    },
+    {
+      "name": "LF:tibia_flexor",
+      "leg": "LF",
+      "function": "tibia_flexor"
+    },
+    {
+      "name": "LF:tibia_extensor",
+      "leg": "LF",
+      "function": "tibia_extensor"
+    },
+    {
+      "name": "LF:tarsus_depressor",
+      "leg": "LF",
+      "function": "tarsus_depressor"
+    },
+    {
+      "name": "LF:tarsus_levator",
+      "leg": "LF",
+      "function": "tarsus_levator"
+    },
+    {
+      "name": "LM:promotor",
+      "leg": "LM",
+      "function": "promotor"
+    },
+    {
+      "name": "LM:remotor",
+      "leg": "LM",
+      "function": "remotor"
+    },
+    {
+      "name": "LM:anterior_rotator",
+      "leg": "LM",
+      "function": "anterior_rotator"
+    },
+    {
+      "name": "LM:posterior_rotator",
+      "leg": "LM",
+      "function": "posterior_rotator"
+    },
+    {
+      "name": "LM:adductor",
+      "leg": "LM",
+      "function": "adductor"
+    },
+    {
+      "name": "LM:tr_flexor",
+      "leg": "LM",
+      "function": "tr_flexor"
+    },
+    {
+      "name": "LM:tr_extensor",
+      "leg": "LM",
+      "function": "tr_extensor"
+    },
+    {
+      "name": "LM:tibia_flexor",
+      "leg": "LM",
+      "function": "tibia_flexor"
+    },
+    {
+      "name": "LM:tibia_extensor",
+      "leg": "LM",
+      "function": "tibia_extensor"
+    },
+    {
+      "name": "LM:tarsus_depressor",
+      "leg": "LM",
+      "function": "tarsus_depressor"
+    },
+    {
+      "name": "LM:tarsus_levator",
+      "leg": "LM",
+      "function": "tarsus_levator"
+    },
+    {
+      "name": "LH:promotor",
+      "leg": "LH",
+      "function": "promotor"
+    },
+    {
+      "name": "LH:remotor",
+      "leg": "LH",
+      "function": "remotor"
+    },
+    {
+      "name": "LH:anterior_rotator",
+      "leg": "LH",
+      "function": "anterior_rotator"
+    },
+    {
+      "name": "LH:posterior_rotator",
+      "leg": "LH",
+      "function": "posterior_rotator"
+    },
+    {
+      "name": "LH:adductor",
+      "leg": "LH",
+      "function": "adductor"
+    },
+    {
+      "name": "LH:tr_flexor",
+      "leg": "LH",
+      "function": "tr_flexor"
+    },
+    {
+      "name": "LH:tr_extensor",
+      "leg": "LH",
+      "function": "tr_extensor"
+    },
+    {
+      "name": "LH:tibia_flexor",
+      "leg": "LH",
+      "function": "tibia_flexor"
+    },
+    {
+      "name": "LH:tibia_extensor",
+      "leg": "LH",
+      "function": "tibia_extensor"
+    },
+    {
+      "name": "LH:tarsus_depressor",
+      "leg": "LH",
+      "function": "tarsus_depressor"
+    },
+    {
+      "name": "LH:tarsus_levator",
+      "leg": "LH",
+      "function": "tarsus_levator"
+    },
+    {
+      "name": "RF:promotor",
+      "leg": "RF",
+      "function": "promotor"
+    },
+    {
+      "name": "RF:remotor",
+      "leg": "RF",
+      "function": "remotor"
+    },
+    {
+      "name": "RF:anterior_rotator",
+      "leg": "RF",
+      "function": "anterior_rotator"
+    },
+    {
+      "name": "RF:posterior_rotator",
+      "leg": "RF",
+      "function": "posterior_rotator"
+    },
+    {
+      "name": "RF:adductor",
+      "leg": "RF",
+      "function": "adductor"
+    },
+    {
+      "name": "RF:tr_flexor",
+      "leg": "RF",
+      "function": "tr_flexor"
+    },
+    {
+      "name": "RF:tr_extensor",
+      "leg": "RF",
+      "function": "tr_extensor"
+    },
+    {
+      "name": "RF:tibia_flexor",
+      "leg": "RF",
+      "function": "tibia_flexor"
+    },
+    {
+      "name": "RF:tibia_extensor",
+      "leg": "RF",
+      "function": "tibia_extensor"
+    },
+    {
+      "name": "RF:tarsus_depressor",
+      "leg": "RF",
+      "function": "tarsus_depressor"
+    },
+    {
+      "name": "RF:tarsus_levator",
+      "leg": "RF",
+      "function": "tarsus_levator"
+    },
+    {
+      "name": "RM:promotor",
+      "leg": "RM",
+      "function": "promotor"
+    },
+    {
+      "name": "RM:remotor",
+      "leg": "RM",
+      "function": "remotor"
+    },
+    {
+      "name": "RM:anterior_rotator",
+      "leg": "RM",
+      "function": "anterior_rotator"
+    },
+    {
+      "name": "RM:posterior_rotator",
+      "leg": "RM",
+      "function": "posterior_rotator"
+    },
+    {
+      "name": "RM:adductor",
+      "leg": "RM",
+      "function": "adductor"
+    },
+    {
+      "name": "RM:tr_flexor",
+      "leg": "RM",
+      "function": "tr_flexor"
+    },
+    {
+      "name": "RM:tr_extensor",
+      "leg": "RM",
+      "function": "tr_extensor"
+    },
+    {
+      "name": "RM:tibia_flexor",
+      "leg": "RM",
+      "function": "tibia_flexor"
+    },
+    {
+      "name": "RM:tibia_extensor",
+      "leg": "RM",
+      "function": "tibia_extensor"
+    },
+    {
+      "name": "RM:tarsus_depressor",
+      "leg": "RM",
+      "function": "tarsus_depressor"
+    },
+    {
+      "name": "RM:tarsus_levator",
+      "leg": "RM",
+      "function": "tarsus_levator"
+    },
+    {
+      "name": "RH:promotor",
+      "leg": "RH",
+      "function": "promotor"
+    },
+    {
+      "name": "RH:remotor",
+      "leg": "RH",
+      "function": "remotor"
+    },
+    {
+      "name": "RH:anterior_rotator",
+      "leg": "RH",
+      "function": "anterior_rotator"
+    },
+    {
+      "name": "RH:posterior_rotator",
+      "leg": "RH",
+      "function": "posterior_rotator"
+    },
+    {
+      "name": "RH:adductor",
+      "leg": "RH",
+      "function": "adductor"
+    },
+    {
+      "name": "RH:tr_flexor",
+      "leg": "RH",
+      "function": "tr_flexor"
+    },
+    {
+      "name": "RH:tr_extensor",
+      "leg": "RH",
+      "function": "tr_extensor"
+    },
+    {
+      "name": "RH:tibia_flexor",
+      "leg": "RH",
+      "function": "tibia_flexor"
+    },
+    {
+      "name": "RH:tibia_extensor",
+      "leg": "RH",
+      "function": "tibia_extensor"
+    },
+    {
+      "name": "RH:tarsus_depressor",
+      "leg": "RH",
+      "function": "tarsus_depressor"
+    },
+    {
+      "name": "RH:tarsus_levator",
+      "leg": "RH",
+      "function": "tarsus_levator"
+    }
+  ],
+  "moments": [
+    {
+      "channel": "LF:promotor",
+      "joint": "joint_LFCoxa",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LF:remotor",
+      "joint": "joint_LFCoxa",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LF:remotor",
+      "joint": "joint_LFCoxa_yaw",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LF:adductor",
+      "joint": "joint_LFCoxa_yaw",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LF:anterior_rotator",
+      "joint": "joint_LFCoxa_roll",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LF:posterior_rotator",
+      "joint": "joint_LFCoxa_roll",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LF:tr_flexor",
+      "joint": "joint_LFFemur",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LF:tr_extensor",
+      "joint": "joint_LFFemur",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LF:tibia_flexor",
+      "joint": "joint_LFTibia",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LF:tibia_extensor",
+      "joint": "joint_LFTibia",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LF:tarsus_depressor",
+      "joint": "joint_LFTarsus1",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LF:tarsus_levator",
+      "joint": "joint_LFTarsus1",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LM:promotor",
+      "joint": "joint_LMCoxa",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LM:remotor",
+      "joint": "joint_LMCoxa",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LM:remotor",
+      "joint": "joint_LMCoxa_yaw",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LM:adductor",
+      "joint": "joint_LMCoxa_yaw",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LM:anterior_rotator",
+      "joint": "joint_LMCoxa_roll",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LM:posterior_rotator",
+      "joint": "joint_LMCoxa_roll",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LM:tr_flexor",
+      "joint": "joint_LMFemur",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LM:tr_extensor",
+      "joint": "joint_LMFemur",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LM:tibia_flexor",
+      "joint": "joint_LMTibia",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LM:tibia_extensor",
+      "joint": "joint_LMTibia",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LM:tarsus_depressor",
+      "joint": "joint_LMTarsus1",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LM:tarsus_levator",
+      "joint": "joint_LMTarsus1",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LH:promotor",
+      "joint": "joint_LHCoxa",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LH:remotor",
+      "joint": "joint_LHCoxa",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LH:remotor",
+      "joint": "joint_LHCoxa_yaw",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LH:adductor",
+      "joint": "joint_LHCoxa_yaw",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LH:anterior_rotator",
+      "joint": "joint_LHCoxa_roll",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LH:posterior_rotator",
+      "joint": "joint_LHCoxa_roll",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LH:tr_flexor",
+      "joint": "joint_LHFemur",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LH:tr_extensor",
+      "joint": "joint_LHFemur",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LH:tibia_flexor",
+      "joint": "joint_LHTibia",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LH:tibia_extensor",
+      "joint": "joint_LHTibia",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "LH:tarsus_depressor",
+      "joint": "joint_LHTarsus1",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "LH:tarsus_levator",
+      "joint": "joint_LHTarsus1",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RF:promotor",
+      "joint": "joint_RFCoxa",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RF:remotor",
+      "joint": "joint_RFCoxa",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RF:remotor",
+      "joint": "joint_RFCoxa_yaw",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RF:adductor",
+      "joint": "joint_RFCoxa_yaw",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RF:anterior_rotator",
+      "joint": "joint_RFCoxa_roll",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RF:posterior_rotator",
+      "joint": "joint_RFCoxa_roll",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RF:tr_flexor",
+      "joint": "joint_RFFemur",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RF:tr_extensor",
+      "joint": "joint_RFFemur",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RF:tibia_flexor",
+      "joint": "joint_RFTibia",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RF:tibia_extensor",
+      "joint": "joint_RFTibia",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RF:tarsus_depressor",
+      "joint": "joint_RFTarsus1",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RF:tarsus_levator",
+      "joint": "joint_RFTarsus1",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RM:promotor",
+      "joint": "joint_RMCoxa",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RM:remotor",
+      "joint": "joint_RMCoxa",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RM:remotor",
+      "joint": "joint_RMCoxa_yaw",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RM:adductor",
+      "joint": "joint_RMCoxa_yaw",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RM:anterior_rotator",
+      "joint": "joint_RMCoxa_roll",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RM:posterior_rotator",
+      "joint": "joint_RMCoxa_roll",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RM:tr_flexor",
+      "joint": "joint_RMFemur",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RM:tr_extensor",
+      "joint": "joint_RMFemur",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RM:tibia_flexor",
+      "joint": "joint_RMTibia",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RM:tibia_extensor",
+      "joint": "joint_RMTibia",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RM:tarsus_depressor",
+      "joint": "joint_RMTarsus1",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RM:tarsus_levator",
+      "joint": "joint_RMTarsus1",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RH:promotor",
+      "joint": "joint_RHCoxa",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RH:remotor",
+      "joint": "joint_RHCoxa",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RH:remotor",
+      "joint": "joint_RHCoxa_yaw",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RH:adductor",
+      "joint": "joint_RHCoxa_yaw",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RH:anterior_rotator",
+      "joint": "joint_RHCoxa_roll",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RH:posterior_rotator",
+      "joint": "joint_RHCoxa_roll",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RH:tr_flexor",
+      "joint": "joint_RHFemur",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RH:tr_extensor",
+      "joint": "joint_RHFemur",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RH:tibia_flexor",
+      "joint": "joint_RHTibia",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RH:tibia_extensor",
+      "joint": "joint_RHTibia",
+      "moment_mm": -0.05
+    },
+    {
+      "channel": "RH:tarsus_depressor",
+      "joint": "joint_RHTarsus1",
+      "moment_mm": 0.05
+    },
+    {
+      "channel": "RH:tarsus_levator",
+      "joint": "joint_RHTarsus1",
+      "moment_mm": -0.05
+    }
+  ],
+  "sources": [
+    "https://github.com/NeLy-EPFL/flygym/tree/v1.2.1",
+    "MaleCNS v1.0 muscle-function annotations"
+  ],
+  "limitations": [
+    "Constant moment arms and axis signs are hypotheses.",
+    "Remotor affects two axes; no measured 3-D muscle path.",
+    "Femur roll and unnamed muscles remain without neural actuation.",
+    "Missing annotations are never filled by homolog substitution."
+  ]
+}

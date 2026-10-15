@@ -1,0 +1,17 @@
+{
+  "status": "Engineering stabilization assumptions; not measured fly physiology",
+  "passive_time_constant_s": 0.02,
+  "passive_damping_ratio": 1.0,
+  "driven_joints": {
+    "suffixes": ["Coxa", "Coxa_yaw", "Coxa_roll", "Femur", "Femur_roll", "Tibia", "Tarsus1"],
+    "armature_g_mm2": 0.00001,
+    "minimum_damping_nNm_s_per_rad": 0.0001,
+    "excursion_from_initial_rad": 0.7853981633974483
+  },
+  "distal_foot": {
+    "suffixes": ["Tarsus2", "Tarsus3", "Tarsus4", "Tarsus5"],
+    "armature_g_mm2": 0.000001,
+    "minimum_damping_nNm_s_per_rad": 0.00001,
+    "excursion_from_initial_rad": 1.0471975511965976
+  }
+}

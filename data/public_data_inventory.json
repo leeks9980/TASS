@@ -1,0 +1,24 @@
+{
+  "dataset": "male-cns:v1.0",
+  "official_source": "https://male-cns.janelia.org/download/",
+  "checked_on": "2026-10-01",
+  "flat_tables": {
+    "body-annotations-male-cns-v1.0-minconf-0.5.feather": "Curated neuron identities, types, sides, optic hex columns, soma locations",
+    "body-neurotransmitters-male-cns-v1.0.feather": "Neuron-level neurotransmitter predictions and confidences",
+    "body-stats-male-cns-v1.0-minconf-0.5.feather": "Synapse summary statistics for all segments",
+    "connectome-weights-male-cns-v1.0-minconf-0.5.feather": "Complete segment connectivity; weight is synapse count",
+    "syn-points-male-cns-v1.0-minconf-0.5.feather": "Individual synapse positions and ROI membership",
+    "syn-partners-male-cns-v1.0-minconf-0.5.feather": "Synapse partners, confidence and postsynaptic neuropil",
+    "tbar-neurotransmitters-male-cns-v1.0.feather": "Per-presynapse neurotransmitter probabilities"
+  },
+  "additional_public_assets": {
+    "EM_and_segmentation_volumes": "Published volumetric image/segmentation data; not fetched by the seven-table downloader or used by this point-neuron simulator",
+    "skeletons": "gs://flyem-male-cns/v1.0/segmentation/skeletons-malecns/skeletons-swc/ ; public per-neuron morphology, not fetched or modeled as electrical compartments",
+    "neo4j_database": "gs://flyem-male-cns/v1.0/database/neo4j ; alternative database representation, not fetched"
+  },
+  "not_supplied_by_these_tables": [
+    "Calibrated physiological synaptic efficacy and receptor-specific signs",
+    "Membrane and channel dynamics, synaptic delays and plasticity",
+    "Robot or fly muscle mechanics and a two-motor action decoder"
+  ]
+}
