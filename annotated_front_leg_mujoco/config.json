@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "circuit": "../visual_motor_circuit",
+  "experiment": "../experiment.json",
+  "model": "front_leg_rig.xml",
+  "eye_width": 96,
+  "eye_height": 96,
+  "visual_retention": 0.3,
+  "physics_steps_per_neural_tick": 4,
+  "motor_function_gain": 2500.0,
+  "target_initial_xyz": [1.6, 0.0, 0.3],
+  "target_move_step": 0.15,
+  "joint_limits_degrees": {
+    "protraction": 35.0,
+    "abduction": 25.0,
+    "levation": 35.0,
+    "flexion": 65.0
+  }
+}

@@ -1,0 +1,70 @@
+<mujoco model="TASS annotation-driven front-leg rig">
+  <compiler angle="degree"/>
+  <option timestep="0.005" gravity="0 0 -9.81"/>
+  <visual><global offwidth="192" offheight="96"/><headlight ambient="0.4 0.4 0.4"/></visual>
+  <asset>
+    <texture name="checker" type="2d" builtin="checker" rgb1="0.15 0.17 0.20"
+             rgb2="0.38 0.41 0.45" width="256" height="256"/>
+    <material name="floor" texture="checker" texrepeat="8 8"/>
+  </asset>
+  <default>
+    <geom friction="1.2 0.01 0.001" density="700"/>
+    <joint damping="0.15" armature="0.002"/>
+    <position kp="8" forcelimited="true" forcerange="-2 2"/>
+  </default>
+  <worldbody>
+    <light pos="0 0 4"/>
+    <geom name="floor" type="plane" size="4 4 0.1" material="floor"/>
+    <body name="visual_target" mocap="true" pos="1.6 0 0.3">
+      <geom name="target" type="sphere" size="0.16" rgba="1 0.95 0.08 1"/>
+    </body>
+
+    <body name="torso" pos="0 0 0.48">
+      <geom name="thorax" type="ellipsoid" size="0.19 0.13 0.10" mass="0.8" rgba="0.15 0.34 0.58 1"/>
+      <body name="left_eye_mount" pos="0.17 0.05 0.07">
+        <camera name="left_eye" xyaxes="0 -1 0 0 0 1" fovy="70"/>
+      </body>
+      <body name="right_eye_mount" pos="0.17 -0.05 0.07">
+        <camera name="right_eye" xyaxes="0 -1 0 0 0 1" fovy="70"/>
+      </body>
+
+      <body name="L_coxa" pos="0.04 0.13 -0.02">
+        <joint name="L_protraction" type="hinge" axis="0 0 1" range="-35 35"/>
+        <joint name="L_abduction" type="hinge" axis="1 0 0" range="-25 25"/>
+        <geom name="L_coxa_geom" type="capsule" fromto="0 0 0 0.16 0.08 -0.06" size="0.025" rgba="0.85 0.35 0.18 1"/>
+        <body name="L_femur" pos="0.16 0.08 -0.06">
+          <joint name="L_levation" type="hinge" axis="0 1 0" range="-35 35"/>
+          <geom name="L_femur_geom" type="capsule" fromto="0 0 0 0.23 0 -0.08" size="0.022" rgba="0.9 0.5 0.2 1"/>
+          <body name="L_tibia" pos="0.23 0 -0.08">
+            <joint name="L_flexion" type="hinge" axis="0 1 0" range="-65 65"/>
+            <geom name="L_tibia_geom" type="capsule" fromto="0 0 0 0.20 0 -0.17" size="0.018" rgba="0.95 0.7 0.25 1"/>
+          </body>
+        </body>
+      </body>
+
+      <body name="R_coxa" pos="0.04 -0.13 -0.02">
+        <joint name="R_protraction" type="hinge" axis="0 0 1" range="-35 35"/>
+        <joint name="R_abduction" type="hinge" axis="1 0 0" range="-25 25"/>
+        <geom name="R_coxa_geom" type="capsule" fromto="0 0 0 0.16 -0.08 -0.06" size="0.025" rgba="0.18 0.65 0.9 1"/>
+        <body name="R_femur" pos="0.16 -0.08 -0.06">
+          <joint name="R_levation" type="hinge" axis="0 1 0" range="-35 35"/>
+          <geom name="R_femur_geom" type="capsule" fromto="0 0 0 0.23 0 -0.08" size="0.022" rgba="0.2 0.75 0.95 1"/>
+          <body name="R_tibia" pos="0.23 0 -0.08">
+            <joint name="R_flexion" type="hinge" axis="0 1 0" range="-65 65"/>
+            <geom name="R_tibia_geom" type="capsule" fromto="0 0 0 0.20 0 -0.17" size="0.018" rgba="0.3 0.85 1 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="L_protraction_drive" joint="L_protraction" ctrlrange="-0.611 0.611"/>
+    <position name="L_abduction_drive" joint="L_abduction" ctrlrange="-0.436 0.436"/>
+    <position name="L_levation_drive" joint="L_levation" ctrlrange="-0.611 0.611"/>
+    <position name="L_flexion_drive" joint="L_flexion" ctrlrange="-1.134 1.134"/>
+    <position name="R_protraction_drive" joint="R_protraction" ctrlrange="-0.611 0.611"/>
+    <position name="R_abduction_drive" joint="R_abduction" ctrlrange="-0.436 0.436"/>
+    <position name="R_levation_drive" joint="R_levation" ctrlrange="-0.611 0.611"/>
+    <position name="R_flexion_drive" joint="R_flexion" ctrlrange="-1.134 1.134"/>
+  </actuator>
+</mujoco>

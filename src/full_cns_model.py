@@ -37,12 +37,17 @@ class FullCNS:
     def __init__(self, folder, glutamate='negative', gain=0.95, leak=0.65,
                  weight_mode='incoming',
                  equation=FLYNN_EQUATION,
-                 bias=0.0):
+                 bias=0.0,
+                 visual_retention=0.9,
+                 motor_subclasses=None):
         self.folder = Path(folder)
         self.ids = np.load(self.folder / 'body_ids.npy', mmap_mode='r')
         self.frame = feather.read_feather(self.folder / 'annotations.feather')
         self.annotated_indices = self.frame.graph_index.to_numpy(dtype=np.int64)
         self.gain, self.leak, self.bias = gain, leak, bias
+        if not 0.0 <= visual_retention < 1.0:
+            raise ValueError('visual_retention must be in [0, 1)')
+        self.visual_retention = float(visual_retention)
         self.equation = DynamicsExpression(equation)
         self.state = np.zeros(len(self.ids), dtype=np.float32)
         self.sensory = np.zeros(len(self.ids), dtype=np.float32)
@@ -122,6 +127,7 @@ class FullCNS:
             'response': 'camera luminance; no calibrated fly spectral sensitivity',
             'spatial_mapping': mapping_report,
             'camera_projection': 'per-side min-max normalized hex coordinates; not calibrated visual angles',
+            'temporal_retention': self.visual_retention,
             'unmapped_policy': 'no direct input; never replaced with side-average luminance',
         }
         for side in ['L', 'R']:
@@ -141,11 +147,20 @@ class FullCNS:
                 'unmapped_without_input': int(np.sum(sensory & (sides == side))-len(selected)),
                 'types': {str(name): int(count) for name, count in types.items()},
             }
-        motor = self.frame.superclass.eq('vnc_motor').to_numpy() & self.frame.subclass.isin(['fl', 'ml', 'hl']).to_numpy()
+        self.motor_subclasses = tuple(motor_subclasses or ('fl', 'ml', 'hl'))
+        invalid_motor_subclasses = set(self.motor_subclasses) - {'fl', 'ml', 'hl'}
+        if not self.motor_subclasses or invalid_motor_subclasses:
+            raise ValueError(f'지원하지 않는 다리 운동뉴런 subclass: {sorted(invalid_motor_subclasses)}')
+        motor = (self.frame.superclass.eq('vnc_motor').to_numpy() &
+                 self.frame.subclass.isin(self.motor_subclasses).to_numpy())
         self.motor_indices = {side: self.annotated_indices[np.flatnonzero(motor & (sides == side))] for side in ['L', 'R']}
         if any(len(x) == 0 for x in self.motor_indices.values()):
             raise ValueError('좌우 다리 운동 신경 주석이 없습니다.')
         self.motor_report = {s: len(v) for s, v in self.motor_indices.items()}
+        self.motor_selection_report = {
+            'subclasses': list(self.motor_subclasses),
+            'side_counts': self.motor_report.copy(),
+        }
         self.last_input_indices = np.array([], dtype=np.int64)
         self.last_input_values = np.array([], dtype=np.float32)
 
@@ -160,7 +175,8 @@ class FullCNS:
         if self.previous is None:
             self.previous = gray.copy()
             self.average = gray.copy()
-        self.average = 0.9 * self.average + 0.1 * gray
+        self.average = (self.visual_retention * self.average +
+                        (1.0-self.visual_retention) * gray)
         # This is an explicit camera-to-photoreceptor adapter, not a calibrated
         # compound-eye spectral or phototransduction model.
         stimulus = np.clip(self.average, 0, 1)
@@ -195,6 +211,8 @@ class FullCNS:
             self.state[np.asarray(clamp_indices, dtype=np.int64)] = 0.
         self.previous = gray.copy()
         self.tick += 1
-        # Population means remain diagnostics only. MuscleDecoder handles body output.
-        scores = {side: float(np.maximum(self.state[idx], 0).mean()) for side, idx in self.motor_indices.items()}
+        # Preserve the signed population state.  Negative motor activity is an
+        # observable inhibitory/reverse command rather than being discarded at
+        # the output boundary.
+        scores = {side: float(self.state[idx].mean()) for side, idx in self.motor_indices.items()}
         return scores

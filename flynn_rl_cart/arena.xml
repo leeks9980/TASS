@@ -1,0 +1,58 @@
+<mujoco model="TASS FLYNN RL cart">
+  <compiler angle="degree"/>
+  <option timestep="0.005" gravity="0 0 -9.81"/>
+  <visual><global offwidth="192" offheight="96"/><headlight ambient="0.35 0.35 0.35"/></visual>
+  <asset>
+    <texture name="checker" type="2d" builtin="checker" rgb1="0.12 0.14 0.17"
+             rgb2="0.42 0.45 0.49" width="256" height="256"/>
+    <material name="floor" texture="checker" texrepeat="10 10"/>
+    <material name="target_glow" rgba="1 0.94 0.06 1" emission="1" specular="0.25" shininess="0.8"/>
+  </asset>
+  <default><geom friction="1.5 0.01 0.001"/><joint damping="0.05"/></default>
+  <worldbody>
+    <light pos="0 0 5" diffuse="0.9 0.9 0.9"/>
+    <geom name="floor" type="plane" size="4 4 0.1" material="floor"/>
+    <geom name="wall_n" type="box" pos="0 3.9 0.35" size="4 0.1 0.35" rgba="0.7 0.72 0.75 1"/>
+    <geom name="wall_s" type="box" pos="0 -3.9 0.35" size="4 0.1 0.35" rgba="0.7 0.72 0.75 1"/>
+    <geom name="wall_e" type="box" pos="3.9 0 0.35" size="0.1 4 0.35" rgba="0.7 0.72 0.75 1"/>
+    <geom name="wall_w" type="box" pos="-3.9 0 0.35" size="0.1 4 0.35" rgba="0.7 0.72 0.75 1"/>
+    <body name="visual_target" mocap="true" pos="1.8 0 0.25">
+      <geom name="target_sphere" type="sphere" size="0.18" material="target_glow"/>
+      <light name="target_light" pos="0 0 0" directional="false" castshadow="false"
+             diffuse="1 0.9 0.18" specular="0.35 0.3 0.08"
+             attenuation="0.7 0.25 0.12"/>
+    </body>
+    <body name="cart" pos="0 0 0.155">
+      <joint name="cart_x" type="slide" axis="1 0 0" damping="0"/>
+      <joint name="cart_y" type="slide" axis="0 1 0" damping="0"/>
+      <joint name="cart_heading" type="hinge" axis="0 0 1" damping="0"/>
+      <geom name="chassis" type="box" size="0.14 0.11 0.06" mass="0.5" rgba="0.08 0.42 0.72 1"/>
+      <geom name="left_eye_marker" type="sphere" pos="0.14 0.055 0.075" size="0.022"
+            rgba="0.7 0.12 0.12 1" contype="0" conaffinity="0"/>
+      <geom name="right_eye_marker" type="sphere" pos="0.14 -0.055 0.075" size="0.022"
+            rgba="0.7 0.12 0.12 1" contype="0" conaffinity="0"/>
+      <body name="left_eye_mount" pos="0.14 0.055 0.075">
+        <camera name="left_eye" xyaxes="0 -1 0 0 0 1" fovy="70"/>
+      </body>
+      <body name="right_eye_mount" pos="0.14 -0.055 0.075">
+        <camera name="right_eye" xyaxes="0 -1 0 0 0 1" fovy="70"/>
+      </body>
+      <body name="left_wheel" pos="0 0.14 -0.07">
+        <joint name="left_wheel_joint" type="hinge" axis="0 1 0"/>
+        <geom name="left_tire" type="cylinder" size="0.09 0.025" euler="90 0 0"
+              mass="0.08" rgba="0.04 0.04 0.04 1"/>
+      </body>
+      <body name="right_wheel" pos="0 -0.14 -0.07">
+        <joint name="right_wheel_joint" type="hinge" axis="0 1 0"/>
+        <geom name="right_tire" type="cylinder" size="0.09 0.025" euler="90 0 0"
+              mass="0.08" rgba="0.04 0.04 0.04 1"/>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <velocity name="left_drive" joint="left_wheel_joint" kv="1" ctrllimited="true"
+              ctrlrange="-15 15" forcelimited="true" forcerange="-1 1"/>
+    <velocity name="right_drive" joint="right_wheel_joint" kv="1" ctrllimited="true"
+              ctrlrange="-15 15" forcelimited="true" forcerange="-1 1"/>
+  </actuator>
+</mujoco>

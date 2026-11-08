@@ -10,7 +10,7 @@
   "dynamics": {
     "equation": "leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)",
     "gain": 2.0,
-    "leak": 0.3,
+    "leak": 0.64,
     "bias": 0.0,
     "weight_mode": "incoming",
     "glutamate": "negative"
