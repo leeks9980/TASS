@@ -174,22 +174,42 @@ L1/L2/L3 등 column 뉴런을 찾고 가중치가 가장 큰 hex column을 광�
 접촉과 관절 상태는 기록하며, 고유수용 감각 뉴런에 임의로 입력하지 않는다.
 
 ```text
-h_next = leak*h + (1-leak)*max(0, tanh(gain*W*h + camera_input))
+h_next = leak*h + (1-leak)*tanh(gain*W*h + camera_input + bias)
 ```
 
-기본 leak 0.65, gain 0.95. W는 시냅스 수의 postsynaptic 입력 합 정규화다.
+기본 leak 0.65, gain 0.95, bias 0이다. W는 시냅스 수의 postsynaptic 입력 합 정규화다.
+이 식은 FLYNN의 leaky connectome RNN 식을 사용한다. FLYNN과 달리 여기서는 가중치,
+뉴런 유형별 leak, bias를 학습하지 않으며 하나의 고정 leak과 0 bias를 사용한다.
+`tanh` 뒤에 ReLU를 적용하지 않으므로 억제 입력의 음수 hidden state도 다음 홉으로 전달된다.
 `--weight-mode raw`로 원본 수를 사용할 수 있지만 gain과 포화를 함께 확인해야 한다.
 원본 MaleCNS 뉴런 단위 표에서 `ground_truth`, `consensus_nt`, 세포형 예측, 개별 예측 순으로
 전달물질 이름을 선택한다. 기본 부호는 ACh +, GABA −, glutamate −, histamine −이다.
 Glutamate는 `--glutamate positive` 비교 옵션을 남긴다. dopamine·octopamine·serotonin은
 선행 전체뇌 모델과의 계산 호환을 위해 +로 두지만, 이는 빠른 흥분성 작용의 생물학적 확정값이 아니다.
 미확인 전달물질·미주석 segment는 + 구조 전달로 처리한다.
-현재 0 기준·비음수 rate 동역학은 억제 입력을 0으로 잘라낼 수 있으므로, 올바른 부호만으로
-시각 동역학이 검증되는 것은 아니다. 기준 활동 또는 막전위 모델은 별도 검토가 필요하다.
+Signed tanh 상태는 억제 입력을 음수 계산 상태로 전달하지만, 생리학적으로 보정된 발화율이나
+막전위는 아니다. 올바른 전달물질 부호와 구조 경로만으로 실제 시각 동역학이 검증되는 것은 아니다.
 도파민 예측이 자동 학습·보상·자율성을 부여하지 않는다. LLM·강화학습·보행 생성기는 없다.
 신경 업데이트는 기본 가상 0.05초마다 1회이며 생물학적 시간 보정값은 아니다.
 
 ## 기록, 재생, 분석
+
+### 실험 설정 파일
+
+프로젝트 루트의 `experiment.json`이 자동 실험의 단일 설정 파일이다. `dynamics.equation`은 우변만
+적으며 `h`, `recurrent`, `sensory`, `gain`, `leak`, `bias`를 사용할 수 있다.
+허용 함수는 `tanh`, `maximum`, `minimum`, `clip`, `abs`다. 속성 접근, import, 인덱싱과
+그 밖의 Python 문법은 거부한다. 예를 들어 이전 비음수 식과 비교하려면 다음처럼 바꾼다.
+
+```text
+leak*h + (1-leak)*maximum(0, tanh(gain*recurrent + sensory + bias))
+```
+
+`run_auto_recording.cmd`는 JSON의 경로·회로·동역학·운동·프로토콜 값을 읽어 실행한다.
+`check_experiment.cmd`는 MuJoCo를 시작하지 않고 JSON, 경로, 수식과 예제 계산을 검사한다.
+CLI 옵션은 JSON보다 우선한다. `run_recording.cmd`는 같은 설정을 사용하되 자동 프로토콜과
+몸체 고정을 끄고 안전 구동 모드로 덮어쓴다. 기록의 `metadata.json`에는 설정 원문과 해시가
+남으므로 어떤 식과 매개변수로 만든 결과인지 확인할 수 있다.
 
 새 폴더는 `simulation_logs/full_fly_날짜/`다.
 

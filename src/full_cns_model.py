@@ -10,16 +10,42 @@ import pyarrow.feather as feather
 from scipy.sparse import csr_matrix
 
 from neurotransmitter_model import neurotransmitter_effects, resolved_neurotransmitters
+from safe_dynamics import DynamicsExpression
+
+
+FLYNN_EQUATION = 'leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)'
+
+
+def is_flynn_equation(equation):
+    return ''.join(str(equation).split()) == ''.join(FLYNN_EQUATION.split())
+
+
+def flynn_leaky_update(state, drive, retention):
+    """Apply FLYNN Eq. (1) in place with a zero, untrained bias.
+
+    ``retention`` is the paper's alpha: the fraction of the previous hidden
+    state retained at each step.  The public FLYNN code calls ``1-retention``
+    its update alpha.  Keeping signed tanh states is essential because clipping
+    negative values would erase inhibition at a zero initial state.
+    """
+    np.tanh(drive, out=drive)
+    state *= retention
+    state += (1-retention) * drive
 
 
 class FullCNS:
-    def __init__(self, folder, glutamate='negative', gain=0.95, leak=0.65, weight_mode='incoming'):
+    def __init__(self, folder, glutamate='negative', gain=0.95, leak=0.65,
+                 weight_mode='incoming',
+                 equation=FLYNN_EQUATION,
+                 bias=0.0):
         self.folder = Path(folder)
         self.ids = np.load(self.folder / 'body_ids.npy', mmap_mode='r')
         self.frame = feather.read_feather(self.folder / 'annotations.feather')
         self.annotated_indices = self.frame.graph_index.to_numpy(dtype=np.int64)
-        self.gain, self.leak = gain, leak
+        self.gain, self.leak, self.bias = gain, leak, bias
+        self.equation = DynamicsExpression(equation)
         self.state = np.zeros(len(self.ids), dtype=np.float32)
+        self.sensory = np.zeros(len(self.ids), dtype=np.float32)
         self.glutamate = glutamate
         # Copy-on-write mappings keep original raw counts immutable.
         data = np.load(self.folder / 'synapse_counts.npy', mmap_mode='c')
@@ -40,10 +66,22 @@ class FullCNS:
             'glutamate_effect_is_assumption': True,
             'histamine_effect': '-1 model-wide approximation; receptor-resolved exceptions are not represented',
             'monoamine_effect': '+1 Shiu-compatible computational assumption; neuromodulation is not represented',
-            'zero_baseline_warning': (
-                'The nonnegative zero-baseline rate model can clip purely inhibitory input to zero; '
-                'correct transmitter signs do not by themselves provide validated visual dynamics.'),
+            'signed_state_interpretation': (
+                'FLYNN-style tanh hidden states are signed computational states, not calibrated firing rates.'),
             'dopamine_is_not_reward_or_instantaneous_learning': True,
+        }
+        self.dynamics_report = {
+            'model': ('FLYNN leaky connectome RNN recurrence' if is_flynn_equation(equation)
+                      else 'user-configured connectome recurrence'),
+            'equation': self.equation.expression,
+            'matches_flynn_equation': is_flynn_equation(equation),
+            'paper': 'https://arxiv.org/abs/2607.00025',
+            'bias': float(self.bias),
+            'bias_is_trained': False,
+            'weights_are_trained': False,
+            'difference_from_trained_FLYNN': (
+                'FLYNN trains recurrent weights, per-cell-type leak rates, and biases; '
+                'this experiment keeps MaleCNS weights fixed and uses one configured leak and scalar bias.'),
         }
         for first in range(0, len(self.ids), 500_000):
             last = min(first + 500_000, len(self.ids))
@@ -113,6 +151,7 @@ class FullCNS:
 
     def reset(self):
         self.state.fill(0)
+        self.sensory.fill(0)
         self.previous = self.average = None
         self.tick = 0
 
@@ -144,15 +183,12 @@ class FullCNS:
             all_values.append(values)
         self.last_input_indices = np.concatenate(all_indices)
         self.last_input_values = np.concatenate(all_values)
-        activation = self.matrix @ self.state
-        activation *= self.gain
-        activation[self.last_input_indices] += self.last_input_values
-        np.tanh(activation, out=activation)
-        # Treat activity as a nonnegative rate. Negative "firing" would reverse
-        # the assumed sign of an inhibitory neuron's downstream effect.
-        np.maximum(activation, 0, out=activation)
-        self.state *= self.leak
-        self.state += (1-self.leak) * activation
+        recurrent = self.matrix @ self.state
+        self.sensory.fill(0)
+        self.sensory[self.last_input_indices] = self.last_input_values
+        self.state[:] = self.equation.evaluate(
+            h=self.state, recurrent=recurrent, sensory=self.sensory,
+            gain=self.gain, leak=self.leak, bias=self.bias)
         if clamp_indices is not None:
             # Model intervention used by offline ablation replay. Clamping after
             # the update removes this population from the next recurrent step.

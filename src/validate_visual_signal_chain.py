@@ -171,9 +171,52 @@ def svg_side_bars(summary, stages):
     return ''.join(parts)
 
 
+def svg_circuit_overview(summary, counts, circuit_report):
+    """Show retained stage populations separately from observed neural activity."""
+    width, height = 1120, 330
+    stages = [key for key, _, _ in STAGES]
+    labels = {key: label for key, label, _ in STAGES}
+    preferred_case = 'bright' if 'bright' in set(summary.case) else str(summary.case.iloc[0])
+    selected = summary[summary.case.eq(preferred_case)].set_index('stage')
+    x_positions = np.linspace(115, width - 115, len(stages))
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" role="img">',
+             '<title>추출된 시각 운동 경로의 구조와 실제 활성 상태</title>',
+             '<desc>구조적으로 보존된 각 단계의 뉴런 수와 밝은 자극 마지막 구간의 활성 비율 및 평균값을 비교합니다.</desc>',
+             '<defs><marker id="vm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker></defs>',
+             f'<rect width="{width}" height="{height}" rx="18" fill="#0f172a"/>',
+             '<text x="28" y="36" font-size="21" font-weight="700" fill="#f8fafc">추출 경로 구조와 실제 활성</text>',
+             f'<text x="28" y="62" font-size="13" fill="#94a3b8">실행 그래프 {int(circuit_report.get("graph_nodes_including_segments", 0)):,} 노드 · {int(circuit_report.get("csr_edges", 0)):,} 연결 · 표시 조건 {html.escape(preferred_case)}</text>']
+    for left, right in zip(x_positions[:-1], x_positions[1:]):
+        parts.append(f'<line x1="{left+82:.1f}" y1="166" x2="{right-82:.1f}" y2="166" stroke="#64748b" stroke-width="3" marker-end="url(#vm-arrow)"/>')
+    for x, stage in zip(x_positions, stages):
+        row = selected.loc[stage] if stage in selected.index else None
+        mean = float(row['mean']) if row is not None else 0.
+        active = float(row['active_fraction']) if row is not None else 0.
+        count = int(counts.get(stage, 0))
+        fill = '#0e7490' if active > 0 else '#7f1d1d'
+        status = f'{active*100:.2f}% 활성' if active > 0 else '활성 0%'
+        parts.extend([
+            f'<rect x="{x-82:.1f}" y="104" width="164" height="124" rx="14" fill="{fill}"/>',
+            f'<text x="{x:.1f}" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#f8fafc">{html.escape(labels[stage])}</text>',
+            f'<text x="{x:.1f}" y="160" text-anchor="middle" font-size="14" fill="#e2e8f0">{count:,} 뉴런</text>',
+            f'<text x="{x:.1f}" y="187" text-anchor="middle" font-size="14" fill="#f8fafc">{status}</text>',
+            f'<text x="{x:.1f}" y="212" text-anchor="middle" font-size="13" fill="#e2e8f0">평균 {mean:.3g}</text>',
+        ])
+    parts.append('<text x="28" y="286" font-size="14" fill="#e2e8f0">청록: 기록에서 활성 확인 · 적색: 구조에는 있으나 기록된 활동은 0</text>')
+    parts.append('<text x="28" y="311" font-size="13" fill="#94a3b8">화살표는 구조적 경로 보존을 뜻하며, 신호 전달 성공을 뜻하지 않습니다.</text></svg>')
+    return ''.join(parts)
+
+
 def validate(run):
     run = run.resolve()
     metadata = json.loads((run / 'metadata.json').read_text(encoding='utf-8'))
+    circuit_report = metadata.get('circuit_report', {})
+    circuit_scope = circuit_report.get('scope', 'unspecified')
+    corridor_only = bool(circuit_report.get('runtime_uses_only_saved_corridor', False))
+    equation = str(metadata.get('equation', ''))
+    signed_flynn_dynamics = bool(
+        metadata.get('dynamics', {}).get('matches_flynn_equation',
+                                         'tanh' in equation and 'maximum' not in equation))
     events = load_events(run)
     if not events or 'neutral' not in {e['case'] for e in events}:
         raise ValueError('neutral을 포함한 기록이 필요합니다.')
@@ -203,7 +246,14 @@ def validate(run):
     finite = bool(timeline.finite.all())
     stage_signal = {stage: float(summary[summary.stage.eq(stage)].absolute_delta.max())
                     if (summary.stage == stage).any() else 0. for stage, _, _ in STAGES}
+    downstream_signal_missing = (stage_signal.get('photoreceptor', 0.) > 1e-12 and
+                                 all(stage_signal.get(stage, 0.) <= 1e-12 for stage in
+                                     ['optic_lobe', 'visual_projection', 'descending', 'leg_motor']))
     warnings = []
+    if not corridor_only:
+        warnings.append('이 기록은 역추적된 시각→운동 경로 전용 회로로 실행되지 않았습니다.')
+    if not signed_flynn_dynamics:
+        warnings.append('이 기록은 현재 FLYNN signed-tanh 업데이트 식으로 생성되지 않았습니다.')
     if not profile_matches:
         warnings.append('이 기록은 현재 전달물질 부호 설정과 다릅니다. 코드 검사용으로만 보고, 최종 검증은 재수집 기록으로 해야 합니다.')
     if not finite:
@@ -211,35 +261,49 @@ def validate(run):
     for stage, value in stage_signal.items():
         if value <= 1e-12:
             warnings.append(f'{stage} 단계에서 neutral 대비 측정 가능한 변화가 없습니다.')
-    verdict = '재수집 필요' if not profile_matches else ('수치 오류 발견' if not finite else '검토 가능')
+    verdict = ('잘못된 회로 범위' if not corridor_only else
+               ('잘못된 업데이트 식' if not signed_flynn_dynamics else
+               ('재수집 필요' if not profile_matches else
+                ('수치 오류 발견' if not finite else
+                 ('신호 전달 실패' if downstream_signal_missing else '검토 가능')))))
     report = {
-        'schema': 1, 'run': str(run), 'verdict': verdict,
+        'schema': 2, 'run': str(run), 'verdict': verdict,
+        'circuit_scope': circuit_scope,
+        'runtime_uses_only_visual_motor_corridor': corridor_only,
+        'runtime_graph_nodes': circuit_report.get('graph_nodes_including_segments'),
+        'runtime_graph_edges': circuit_report.get('csr_edges'),
+        'uses_signed_flynn_dynamics': signed_flynn_dynamics,
         'recording_matches_current_transmitter_profile': profile_matches,
         'recorded_effects': recorded, 'current_required_effects': required,
-        'equation': metadata.get('equation'), 'stimulus_onset_s': onset,
+        'equation': equation, 'stimulus_onset_s': onset,
         'frames': len(events), 'conditions': sorted({e['case'] for e in events}),
         'population_counts': counts, 'maximum_post_onset_absolute_delta_by_stage': stage_signal,
+        'photoreceptor_active_but_all_downstream_stages_zero': downstream_signal_missing,
         'all_values_finite': finite, 'warnings': warnings,
         'interpretation_limits': [
             '집단 평균은 신호가 해당 집단에 나타났는지 보는 기술 통계이며 개별 시냅스의 인과 경로 증명이 아닙니다.',
             'DN과 다리 운동뉴런의 반응은 실제 보행 또는 근육 구동 검증이 아닙니다.',
             '좌우 차이와 자극 선택성은 공개 생리 데이터와 별도로 비교해야 합니다.',
-            '현재 비음수·0 기준선 모델에서는 억제성 히스타민 입력이 잘릴 수 있으므로 새 기록에서 광수용체 다음 단계 소실 여부를 반드시 확인해야 합니다.'
+            'Signed tanh hidden state는 FLYNN의 계산 상태이며 생리학적으로 보정된 발화율이나 막전위가 아닙니다.',
+            'FLYNN 원 모델과 달리 이 기록은 가중치·뉴런 유형별 leak·bias를 학습하지 않았습니다.'
         ]}
     (output / 'validation_report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     ordered_stages = ['camera_drive'] + [key for key, _, _ in STAGES]
     cases = [c for c in ['bright', 'dim', 'move_left', 'move_right', 'approach', 'free'] if c in set(summary.case)]
     heatmap = svg_heatmap(summary, ordered_stages, cases)
     sides = svg_side_bars(side_summary, [key for key, _, _ in STAGES])
+    overview = svg_circuit_overview(summary, counts, circuit_report)
     (output / 'signal_chain_heatmap.svg').write_text(heatmap, encoding='utf-8')
     (output / 'left_right_response.svg').write_text(sides, encoding='utf-8')
+    (output / 'extracted_circuit_overview.svg').write_text(overview, encoding='utf-8')
     warning_html = ''.join(f'<li>{html.escape(x)}</li>' for x in warnings) or '<li>자동 경고 없음</li>'
     rows_html = ''.join('<tr>' + ''.join(f'<td>{html.escape(str(v))}</td>' for v in row) + '</tr>'
                         for row in summary[['case', 'stage_label', 'signed_delta', 'absolute_delta', 'active_fraction']].itertuples(index=False, name=None))
     document = f'''<!doctype html><html lang="ko"><meta charset="utf-8"><title>시각 신호 검증 보고서</title>
 <style>body{{margin:auto;max-width:1120px;padding:36px;background:#020617;color:#e2e8f0;font-family:Segoe UI,Malgun Gothic,sans-serif}}h1,h2{{color:#f8fafc}}.status{{display:inline-block;padding:8px 14px;border-radius:99px;background:#7c2d12;font-weight:700}}.card{{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:20px;margin:18px 0}}img{{width:100%}}table{{width:100%;border-collapse:collapse;font-size:13px}}th,td{{padding:8px;border-bottom:1px solid #334155;text-align:right}}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){{text-align:left}}code{{color:#7dd3fc}}</style>
 <h1>시각 입력 → 다리 운동뉴런 신호 검증</h1><p class="status">판정: {html.escape(verdict)}</p>
-<div class="card"><h2>무엇을 검사했나</h2><p>몸체는 고정된 기록입니다. 카메라가 만든 광수용체 입력과 CNS 다섯 집단의 값을 neutral 조건과 같은 프레임 위치에서 비교했습니다. 실제 움직임이나 디코더는 검증 대상이 아닙니다.</p><ul>{warning_html}</ul></div>
+<div class="card"><h2>무엇을 검사했나</h2><p>몸체는 고정된 기록입니다. 카메라가 만든 광수용체 입력과 역추적으로 보존된 시각→운동 경로의 값을 neutral 조건과 같은 프레임 위치에서 비교했습니다. 실제 움직임이나 디코더는 검증 대상이 아닙니다.</p><p><strong>실행 회로:</strong> {html.escape(str(circuit_scope))}<br><strong>경로 전용 실행:</strong> {'예' if corridor_only else '아니오'}<br><strong>노드/연결:</strong> {html.escape(str(circuit_report.get('graph_nodes_including_segments', '알 수 없음')))} / {html.escape(str(circuit_report.get('csr_edges', '알 수 없음')))}</p><ul>{warning_html}</ul></div>
+<div class="card">{overview}</div>
 <div class="card">{heatmap}</div><div class="card">{sides}</div>
 <div class="card"><h2>수치 표</h2><table><thead><tr><th>조건</th><th>단계</th><th>부호 변화</th><th>절대 변화</th><th>활성 비율</th></tr></thead><tbody>{rows_html}</tbody></table></div>
 <div class="card"><h2>파일 안내</h2><p><code>stage_timeseries.csv</code>: 모든 프레임·단계·좌우 값<br><code>condition_summary.csv</code>: 조건별 요약<br><code>side_summary.csv</code>: 좌우 비교<br><code>validation_report.json</code>: 자동 판정과 한계</p></div></html>'''

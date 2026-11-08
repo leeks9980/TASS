@@ -14,6 +14,7 @@ import pandas as pd
 import pyarrow.feather as feather
 
 from neurotransmitter_model import resolved_neurotransmitters
+from safe_dynamics import DynamicsExpression
 from scipy.sparse import csr_matrix
 
 
@@ -167,6 +168,15 @@ def inspect(run):
     annotation_lookup = dict(zip(indices, annotation.superclass.fillna('unclassified')))
     quality = np.array([int(x) in annotation_lookup for x in pres])
     ledger = []
+    recorded_equation = meta['parameters'].get('equation')
+    if not recorded_equation:
+        recorded_equation = ('leak*h + (1-leak)*maximum(0, tanh(gain*recurrent + sensory + bias))'
+                             if 'max(0' in str(meta.get('equation', '')) else
+                             'leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)')
+    dynamics = DynamicsExpression(recorded_equation)
+    gain = float(meta['parameters']['gain'])
+    leak = float(meta['parameters']['leak'])
+    bias = float(meta['parameters'].get('bias', 0.))
     for i, graph in enumerate(motor_graph):
         a, b = incoming.indptr[i:i+2]
         pre = incoming.indices[a:b]
@@ -174,18 +184,23 @@ def inspect(run):
         selected = np.searchsorted(pres, pre)
         total = float(counts.sum(dtype=np.float64))
         weights = counts/total if meta['parameters'].get('weight_mode','incoming') == 'incoming' and total else counts
-        contributions = weights*signs[selected]*pre_activity[selected]*meta['parameters']['gain']
+        recurrent_contributions = weights*signs[selected]*pre_activity[selected]
+        contributions = recurrent_contributions*gain
         pos = float(contributions[contributions > 0].sum())
         neg = float(-contributions[contributions < 0].sum())
         net = pos-neg
-        expected = meta['parameters']['leak']*old_motor[i]+(1-meta['parameters']['leak'])*max(0., np.tanh(net))
+        expected = dynamics.evaluate(
+            h=np.array([old_motor[i]], dtype=np.float32),
+            recurrent=np.array([recurrent_contributions.sum()], dtype=np.float32),
+            sensory=np.zeros(1, dtype=np.float32), gain=gain, leak=leak, bias=bias)[0]
         actual = float(final_activity[motor_positions[i]])
         ledger.append({'bodyId': int(graph_ids[graph]), 'type': annotation.iloc[motor_positions[i]].type,
             'side': sides.iloc[motor_positions[i]], 'source_neurons_or_segments': len(pre),
             'total_incoming_synapses': total, 'unannotated_synapse_fraction': float(counts[~quality[selected]].sum()/total) if total else 0.,
             'positive_drive': pos, 'negative_drive': neg, 'net_drive': net,
             'inhibition_fraction_of_positive': neg/pos if pos else None,
-            'prior_activity': float(old_motor[i]), 'final_activity': actual,
+            'prior_activity': float(old_motor[i]), 'equation': recorded_equation,
+            'final_activity': actual,
             'reconstructed_final': float(expected), 'reconstruction_error': abs(expected-actual)})
     ledger = pd.DataFrame(ledger)
     ledger.to_csv(out/'motor_input_balance.csv', index=False, encoding='utf-8-sig')

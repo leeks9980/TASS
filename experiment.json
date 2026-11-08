@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "name": "flynn_signed_visual_motor_corridor_tuned",
+  "description": "FLYNN signed-tanh dynamics with a non-saturating gain/leak setting selected by recorded-frame replay.",
+  "paths": {
+    "circuit": "visual_motor_circuit",
+    "motor_mapping": "config/fly_motor_mapping.json",
+    "require_corridor": true
+  },
+  "dynamics": {
+    "equation": "leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)",
+    "gain": 2.0,
+    "leak": 0.3,
+    "bias": 0.0,
+    "weight_mode": "incoming",
+    "glutamate": "negative"
+  },
+  "motor": {
+    "activity_scale": 0.00001,
+    "muscle_force_uN": 5.0,
+    "muscle_tau": 0.3,
+    "max_joint_torque_nNm": 0.01,
+    "max_torque_rate_nNm_s": 0.05,
+    "motor_settle": 0.5,
+    "motor_ramp": 0.5,
+    "actuation_mode": "record-only"
+  },
+  "simulation": {
+    "fixed_body": true,
+    "neural_interval": 0.05,
+    "record_gb": 60.0
+  },
+  "protocol": {
+    "enabled": true,
+    "manual_case": "free",
+    "cases": [
+      "neutral",
+      "bright",
+      "dim",
+      "move_left",
+      "move_right",
+      "approach",
+      "free"
+    ],
+    "case_seconds": 3.5,
+    "stimulus_onset": 0.5
+  },
+  "notes": [
+    "Edit this file directly, save it, then run run_auto_recording.cmd.",
+    "Run check_experiment.cmd only when you want to validate the JSON before starting.",
+    "gain=2.0 and leak=0.3 produced no saturation through 200 post-stimulus ticks in recorded-frame replay.",
+    "case_seconds=3.5 gives 60 post-stimulus neural ticks after the 0.5 second onset.",
+    "Allowed equation names: h, recurrent, sensory, gain, leak, bias.",
+    "Allowed equation functions: tanh, maximum, minimum, clip, abs.",
+    "The trained FLYNN model learns weights, cell-type leak and bias; this experiment does not."
+  ]
+}

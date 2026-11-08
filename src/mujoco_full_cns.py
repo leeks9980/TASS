@@ -71,9 +71,10 @@ def run(args):
     metadata = {
         'circuit_folder': str(args.circuit.resolve()),
         'circuit_report': json.loads((args.circuit / 'report.json').read_text(encoding='utf-8')),
-        'nt': circuit.nt_report, 'inputs': circuit.input_report, 'motor_population_counts': circuit.motor_report,
+        'nt': circuit.nt_report, 'inputs': circuit.input_report,
+        'dynamics': circuit.dynamics_report, 'motor_population_counts': circuit.motor_report,
         'parameters': vars(args) | {'circuit': str(args.circuit)},
-        'equation': 'h_next=leak*h+(1-leak)*max(0,tanh(gain*W*h+camera_input)); W uses recorded weight-mode and NT assumptions',
+        'equation': circuit.dynamics_report['equation'],
         'acquisition_manifest': json.loads((ROOT / 'data' / 'male-cns-v1.0' / 'manifest.json').read_text(encoding='utf-8')),
         'neural_tick_seconds': 'not biologically calibrated; one update per 0.05 simulated seconds',
         'recording': 'Every neural update; lossless uncompressed sparse/dense auto format; sparse omitted indices equal zero exactly',

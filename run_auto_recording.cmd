@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-call "%~dp0scripts\run_full_cns.cmd" --auto-protocol --auto-cases neutral bright dim move_left move_right approach free --auto-case-seconds 1.0 --stimulus-onset 0.5 --actuation-mode record-only --fixed-body --record-gb 60 %*
+call "%~dp0scripts\run_full_cns.cmd" %*
 if errorlevel 1 (
     set "run_result=%errorlevel%"
     goto :wait_for_escape

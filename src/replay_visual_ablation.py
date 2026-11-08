@@ -88,7 +88,10 @@ def analyze(args):
     parameters = metadata['parameters']
     circuit = FullCNS(folder, glutamate=parameters.get('glutamate', 'negative'),
                       gain=float(parameters['gain']), leak=float(parameters['leak']),
-                      weight_mode=parameters.get('weight_mode', 'incoming'))
+                      weight_mode=parameters.get('weight_mode', 'incoming'),
+                      equation=parameters.get(
+                          'equation', 'leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)'),
+                      bias=float(parameters.get('bias', 0.)))
     events, episode = selected_events(args.run, args.case, args.episode)
     onset = args.after_seconds
     if onset is None:

@@ -9,16 +9,17 @@ if not exist "%~dp0..\data\male-cns-v1.0\manifest.json" (
     "%TASS_PYTHON%" "%~dp0..\src\download_connectome.py" --all-tables
     if errorlevel 1 goto failed
 )
-if not exist "%~dp0..\full_cns\report.json" (
-    "%TASS_PYTHON%" "%~dp0..\src\prepare_full_cns.py"
+set "TASS_VISUAL_MOTOR_CIRCUIT=%~dp0..\visual_motor_circuit"
+if not exist "%TASS_VISUAL_MOTOR_CIRCUIT%\report.json" (
+    "%TASS_PYTHON%" "%~dp0..\src\prepare_visual_motor_circuit.py" --output "%TASS_VISUAL_MOTOR_CIRCUIT%"
     if errorlevel 1 goto failed
 )
-if not exist "%~dp0..\full_cns\photoreceptor_hex_map.feather" (
-    "%TASS_PYTHON%" "%~dp0..\src\build_photoreceptor_hex_map.py"
+if not exist "%TASS_VISUAL_MOTOR_CIRCUIT%\photoreceptor_hex_map.feather" (
+    "%TASS_PYTHON%" "%~dp0..\src\build_photoreceptor_hex_map.py" --circuit "%TASS_VISUAL_MOTOR_CIRCUIT%"
     if errorlevel 1 goto failed
 )
-if not exist "%~dp0..\full_cns\photoreceptor_hex_map_report.json" (
-    "%TASS_PYTHON%" "%~dp0..\src\build_photoreceptor_hex_map.py"
+if not exist "%TASS_VISUAL_MOTOR_CIRCUIT%\photoreceptor_hex_map_report.json" (
+    "%TASS_PYTHON%" "%~dp0..\src\build_photoreceptor_hex_map.py" --circuit "%TASS_VISUAL_MOTOR_CIRCUIT%"
     if errorlevel 1 goto failed
 )
 if not exist "%~dp0..\data\fly_body\manifest.json" (

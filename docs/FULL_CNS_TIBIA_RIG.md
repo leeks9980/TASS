@@ -102,9 +102,10 @@ body ID, 연결 대상/방향, 시냅스 수, 주석, 좌우/종류, 일부 hex-
 - 단일 카메라를 좌우 영역으로 나누고 hex-column을 정규화한다. 좌표가 없는 입력 뉴런은
   해당 영상 영역의 평균을 받는다. 이 수량은 실행 metadata에 기록한다.
 - L1/L2 시간 변화 강조, L3 시간 평균은 공학적 필터다.
-- `h_next = leak*h + (1-leak)*max(0, tanh(gain*W*h + input))`.
+- `h_next = leak*h + (1-leak)*tanh(gain*W*h + input + bias)`.
   신경 활동은 음수가 없는 rate 가정이다. 음의 발화가 억제 신호의 부호를 뒤집는 것을 방지한다.
-  기본 leak 0.65, gain 0.95. W는 시냅스 수를 postsynaptic 입력 합으로 정규화한다.
+  기본 leak 0.65, gain 0.95, bias 0. W는 시냅스 수를 postsynaptic 입력 합으로 정규화한다.
+  FLYNN 식과 같이 signed tanh 상태를 유지하며, 이 실험에서는 가중치·leak·bias를 학습하지 않는다.
   `--weight-mode raw`는 정규화 없이 시냅스 수를 사용한다. 기본 gain에서는 활동이 포화될 수 있으므로
   gain도 명시하여 비교해야 한다. 예: `scripts/run_full_cns.cmd --weight-mode raw --gain 0.001`.
   이 값은 실측 연결 강도가 아니라 비교용 매개변수다.
@@ -113,8 +114,8 @@ body ID, 연결 대상/방향, 시냅스 수, 주석, 좌우/종류, 일부 hex-
 - dopamine·octopamine·serotonin은 선행 전체뇌 모델과의 계산 호환을 위해 +로 두지만,
   neuromodulation이나 학습을 구현한 것이 아니다. 미확인/미주석 segment는 + 구조 전달이다.
   모든 예측 종류·confidence는 원본에 남긴다.
-- 현재 0 기준·비음수 rate 동역학은 억제 입력을 0으로 잘라낼 수 있다. 따라서 histamine 부호를
-  바로잡은 것만으로 시각 신호 전달이 완성되지 않으며 기준 활동/막전위 동역학 검토가 필요하다.
+- Signed tanh 상태는 억제 입력을 음수 계산 상태로 전달하지만 생리학적으로 보정된 발화율이나
+  막전위는 아니다. 전달물질 부호와 구조 경로만으로 실제 시각 동역학이 검증되는 것은 아니다.
 - 신경 업데이트는 물리 0.05초당 1회. 생물학적 시간에 맞춘 값이 아니다.
 - 운동 출력은 위에 명시한 근육별 읽기와 힘·토크 변환이다. 생물학적 decoder와 근육 모델의 검증은 남아 있다.
 - 현재 `models/full_cns_muscle_arena.xml`은 고정된 여섯 관절 진단 장치다.

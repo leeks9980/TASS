@@ -20,9 +20,11 @@ except ImportError as exc:
     raise SystemExit('install_navigation.cmd로 MuJoCo를 설치하세요.') from exc
 from full_cns_model import FullCNS
 from full_cns_recording import Recorder
+from experiment_config import DEFAULT_EXPERIMENT, load_experiment
 from fly_motor_decoder import FlyMotorDecoder
 from full_fly_gui import FlyPanel
 from prepare_fly_body import DEST, LEGS
+from safe_dynamics import DynamicsExpression
 
 CASES = ('neutral', 'bright', 'dim', 'move_left', 'move_right', 'approach', 'free')
 BAD_WARNINGS = ('mjWARN_INERTIA', 'mjWARN_BADQPOS', 'mjWARN_BADQVEL', 'mjWARN_BADQACC', 'mjWARN_BADCTRL')
@@ -237,9 +239,13 @@ def run(args):
     arena_bytes = (DEST / 'arena.xml').read_bytes()
     if hashlib.sha256(arena_bytes).hexdigest() != body_manifest['derived_xml_sha256']:
         raise ValueError('몸체 XML이 manifest와 다릅니다. prepare_fly_body.py --offline으로 다시 준비하세요.')
-    print('공개 초파리 몸체와 전체 CNS를 구성합니다. 전체 segment 계산에는 시간이 걸립니다.', flush=True)
+    print('공개 초파리 몸체와 선택된 시각→운동 경로 회로를 구성합니다.', flush=True)
+    selected_report = json.loads((args.circuit / 'report.json').read_text(encoding='utf-8'))
+    if args.require_corridor and not selected_report.get('runtime_uses_only_saved_corridor', False):
+        raise ValueError('--require-corridor 실행에는 역추적된 시각→운동 경로 회로가 필요합니다.')
     circuit = FullCNS(args.circuit, glutamate=args.glutamate, gain=args.gain,
-                      leak=args.leak, weight_mode=args.weight_mode)
+                      leak=args.leak, weight_mode=args.weight_mode,
+                      equation=args.equation, bias=args.bias)
     decoder = FlyMotorDecoder(circuit.frame, args.mapping, args.activity_scale, args.muscle_force_uN,
                               args.muscle_tau, args.max_joint_torque_nNm,
                               args.max_torque_rate_nNm_s)
@@ -309,25 +315,34 @@ def run(args):
         shutil.copy2(args.mapping, output / 'motor_mapping.json')
         source_folder = output / 'source'
         source_folder.mkdir()
-        for filename in ('mujoco_full_fly.py', 'full_cns_model.py', 'fly_motor_decoder.py',
-                         'full_cns_recording.py', 'prepare_fly_body.py', 'full_fly_gui.py'):
+        for filename in ('mujoco_full_fly.py', 'full_cns_model.py', 'safe_dynamics.py',
+                         'experiment_config.py', 'fly_motor_decoder.py', 'full_cns_recording.py',
+                         'prepare_fly_body.py', 'full_fly_gui.py'):
             shutil.copy2(ROOT / 'src' / filename, source_folder / filename)
+        if (ROOT / 'src' / 'prepare_visual_motor_circuit.py').exists():
+            shutil.copy2(ROOT / 'src' / 'prepare_visual_motor_circuit.py',
+                         source_folder / 'prepare_visual_motor_circuit.py')
         mujoco.mj_saveModel(model, str(output / 'body_model.mjb'), None)
         np.save(output / 'initial_qpos.npy', data.qpos)
         circuit.frame.to_feather(output / 'annotations.feather')
         decoder.all_motor.to_csv(output / 'all_leg_motor_neurons.csv', index=False, encoding='utf-8-sig')
         decoder.unmapped.to_csv(output / 'unmapped_leg_motor_neurons.csv', index=False, encoding='utf-8-sig')
+        circuit_report = selected_report
+        corridor_only = bool(circuit_report.get('runtime_uses_only_saved_corridor', False))
+        parameters = {key: str(value) if isinstance(value, Path) else value
+                      for key, value in vars(args).items() if key != 'experiment_record'}
         metadata = {
             'schema': 2, 'output_mode': 'public_fly_body', 'circuit_folder': str(args.circuit.resolve()),
-            'circuit_report': json.loads((args.circuit / 'report.json').read_text(encoding='utf-8')),
-            'nt': circuit.nt_report, 'inputs': circuit.input_report, 'motor_population_counts': circuit.motor_report,
-            'parameters': {key: str(value) if isinstance(value, Path) else value for key, value in vars(args).items()},
-            'equation': 'h_next=leak*h+(1-leak)*max(0,tanh(gain*W*h+camera_input))',
+            'circuit_report': circuit_report,
+            'nt': circuit.nt_report, 'inputs': circuit.input_report,
+            'dynamics': circuit.dynamics_report, 'motor_population_counts': circuit.motor_report,
+            'experiment': args.experiment_record, 'parameters': parameters,
+            'equation': circuit.dynamics_report['equation'],
             'body_source': body_manifest, 'muscle_decoder': decoder.report,
             'mujoco_version': mujoco.__version__, 'neural_tick_seconds': args.neural_interval,
             'neural_time_calibration': 'engineering interval; not measured biological timing',
             'physics_step_seconds': float(model.opt.timestep), 'physics_steps_per_neural_tick': substeps,
-            'recording': 'Lossless whole graph every neural tick; camera before update; every physics step in same snapshot.',
+            'recording': 'Lossless selected runtime graph every neural tick; camera before update; every physics step in same snapshot.',
             'model_names': {label: [mujoco.mj_id2name(model, kind, i) for i in range(count)] for label, kind, count in
                             [('bodies', mujoco.mjtObj.mjOBJ_BODY, model.nbody), ('joints', mujoco.mjtObj.mjOBJ_JOINT, model.njnt),
                              ('geoms', mujoco.mjtObj.mjOBJ_GEOM, model.ngeom), ('actuators', mujoco.mjtObj.mjOBJ_ACTUATOR, model.nu)]},
@@ -338,10 +353,14 @@ def run(args):
             'numerical_failure_policy': 'Auto reset disabled; archive failure and pause with last completed body frame. Reset required to resume.',
             'body_root_id': root, 'floor_geom_id': floor, 'foot_body_ids': foot_bodies,
             'generalized_force_units': 'Free-root translation uN; free-root rotation and all hinge DoFs nNm. Direct hinge actuator_force nNm.',
-            'sensory_input': 'One camera drives annotated ol_sensory photoreceptors; L1/L2/L3 and later neurons are reached through the full graph.',
+            'sensory_input': 'One camera drives retained ol_sensory photoreceptors; later neurons are reached only through the saved visual-to-motor corridor.',
             'body_feedback': 'Recorded only; no inferred proprioceptive injection.',
             'actuation_mode': args.actuation_mode,
-            'motor_observation_chain': 'raw whole-CNS state -> grouped MN mean -> requested torque -> safety clamp/rate limit -> optionally applied torque; every stage recorded separately',
+            'motor_observation_chain': 'raw corridor state -> grouped MN mean -> requested torque -> safety clamp/rate limit -> optionally applied torque; every stage recorded separately',
+            'runtime_scope_check': {
+                'corridor_only': corridor_only,
+                'scope': circuit_report.get('scope', 'unspecified'),
+            },
             'fixed_cruise': False, 'baseline_controller': False, 'learning': False, 'gait_controller': False,
             'neutral_comparison': 'Diagnostics at equal ticks after complete resets; no effect on output.',
             'acquisition_manifest': json.loads((ROOT / 'data/male-cns-v1.0/manifest.json').read_text(encoding='utf-8')),
@@ -358,7 +377,7 @@ def run(args):
             print('각 조건 전환 시 몸체·CNS·출력을 초기화하며, 자동 완료 후 종료합니다.', flush=True)
         else:
             print('Space 시작/정지, R 초기화, C 시점, 1 물체 없음, 2 밝게, 3 어둡게, 4 왼쪽, 5 오른쪽, 6 접근, 7 이동 물체', flush=True)
-        print(f'자극은 가상 {args.stimulus_onset:g}초에 시작합니다. 전체 상태 매 업데이트 저장, 한도 {args.record_gb:g} GiB.', flush=True)
+        print(f'자극은 가상 {args.stimulus_onset:g}초에 시작합니다. 경로 회로 상태를 매 업데이트 저장하며 한도는 {args.record_gb:g} GiB입니다.', flush=True)
         renderer = mujoco.Renderer(model, height=120, width=160)
         panel = FlyPanel(enqueue, decoder)
         decoded, body, feet, _ = observation()
@@ -415,7 +434,7 @@ def run(args):
                 if paused:
                     time.sleep(.02)
                     continue
-                panel.set_status(case, False, recorder.count, data.time, '전체 CNS 계산 중')
+                panel.set_status(case, False, recorder.count, data.time, '시각→운동 경로 계산 중')
                 panel.pump()
                 input_time = float(data.time)
                 renderer.update_scene(data, camera='eye')
@@ -530,7 +549,7 @@ def run(args):
                       f'{np.max(np.abs(data.ctrl[actuators])):.4f} nNm | CNS {neural_ms:.0f} ms | '
                       f'저장 {recorder.bytes/1024**3:.2f} GiB', flush=True)
                 if exhausted:
-                    print('전체 상태 저장 한도에 도달했습니다. --record-gb로 한도를 변경할 수 있습니다.', flush=True)
+                    print('경로 회로 상태 저장 한도에 도달했습니다. --record-gb로 한도를 변경할 수 있습니다.', flush=True)
                     protocol_status['stopped_by_storage_limit'] = True
                     break
                 if args.auto_protocol and data.time + 1e-12 >= args.auto_case_seconds:
@@ -571,13 +590,27 @@ def run(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
+    experiment_parser = argparse.ArgumentParser(add_help=False)
+    experiment_parser.add_argument('--experiment', type=Path, default=DEFAULT_EXPERIMENT,
+                                   help='JSON file supplying all experiment defaults')
+    experiment_args, _ = experiment_parser.parse_known_args()
+    try:
+        experiment = load_experiment(experiment_args.experiment)
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        experiment_parser.error(f'experiment configuration error: {exc}')
+
+    parser = argparse.ArgumentParser(description=__doc__, parents=[experiment_parser])
     parser.add_argument('--circuit', type=Path, default=ROOT / 'full_cns')
+    parser.add_argument('--require-corridor', action=argparse.BooleanOptionalAction, default=False,
+                        help='Reject a circuit unless its report confirms visual-to-motor corridor-only runtime.')
     parser.add_argument('--mapping', type=Path, default=ROOT / 'config' / 'fly_motor_mapping.json')
     parser.add_argument('--case', choices=CASES, default='free')
     parser.add_argument('--glutamate', choices=('positive', 'negative'), default='negative')
     parser.add_argument('--gain', type=float, default=.95)
     parser.add_argument('--leak', type=float, default=.65)
+    parser.add_argument('--bias', type=float, default=0.)
+    parser.add_argument('--equation', default='leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)',
+                        help='Restricted neural update expression; experiment.json is easier for editing.')
     parser.add_argument('--weight-mode', choices=('incoming', 'raw'), default='incoming')
     parser.add_argument('--activity-scale', type=float, default=1e-5)
     parser.add_argument('--muscle-force-uN', dest='muscle_force_uN', type=float, default=5.)
@@ -587,23 +620,32 @@ if __name__ == '__main__':
     parser.add_argument('--motor-settle', type=float, default=.5)
     parser.add_argument('--motor-ramp', type=float, default=.5)
     parser.add_argument('--actuation-mode', choices=('safe', 'record-only'), default='safe')
-    parser.add_argument('--fixed-body', action='store_true',
+    parser.add_argument('--fixed-body', action=argparse.BooleanOptionalAction, default=False,
                         help='초기 몸 전체 자세를 유지해 카메라와 모든 관절의 물리 운동을 고정')
     parser.add_argument('--neural-interval', type=float, default=.05)
     parser.add_argument('--stimulus-onset', type=float, default=.5)
     parser.add_argument('--record-gb', type=float, default=60.)
-    parser.add_argument('--auto-protocol', action='store_true',
+    parser.add_argument('--auto-protocol', action=argparse.BooleanOptionalAction, default=False,
                         help='지정한 자극 조건을 조건당 가상시간만큼 자동 기록')
     parser.add_argument('--auto-cases', nargs='+', choices=CASES,
                         default=['neutral', 'bright', 'dim', 'move_left', 'move_right', 'approach', 'free'])
     parser.add_argument('--auto-case-seconds', type=float, default=1.)
+    parser.set_defaults(**experiment['defaults'])
     args = parser.parse_args()
-    numbers = [args.gain, args.leak, args.activity_scale, args.muscle_force_uN, args.muscle_tau,
+    args.experiment_record = {
+        'path': str(experiment['path']), 'sha256': experiment['sha256'],
+        'configuration': experiment['document'],
+    }
+    numbers = [args.gain, args.leak, args.bias, args.activity_scale, args.muscle_force_uN, args.muscle_tau,
                args.max_joint_torque_nNm, args.max_torque_rate_nNm_s, args.motor_settle,
                args.motor_ramp, args.neural_interval, args.stimulus_onset, args.record_gb,
                args.auto_case_seconds]
     if not all(np.isfinite(x) for x in numbers) or not 0 <= args.leak < 1 or args.gain < 0 or args.stimulus_onset < 0 or args.motor_settle < 0 or any(x <= 0 for x in [args.activity_scale, args.muscle_force_uN, args.muscle_tau, args.max_joint_torque_nNm, args.max_torque_rate_nNm_s, args.motor_ramp, args.neural_interval, args.record_gb, args.auto_case_seconds]):
         parser.error('유한한 값이 필요합니다. leak은 [0,1), gain/자극 시작은 0 이상, 나머지는 양수여야 합니다.')
+    try:
+        DynamicsExpression(args.equation)
+    except ValueError as exc:
+        parser.error(f'잘못된 dynamics equation: {exc}')
     if args.auto_protocol and args.auto_case_seconds <= args.stimulus_onset:
         parser.error('auto-case-seconds는 stimulus-onset보다 커야 자극 후 프레임을 기록합니다.')
     try:

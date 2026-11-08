@@ -14,6 +14,7 @@ from neurotransmitter_model import resolved_neurotransmitters
 import pyarrow as pa
 import pyarrow.ipc as ipc
 from full_cns_recording import state_at
+from safe_dynamics import DynamicsExpression
 
 
 def trace(args):
@@ -52,7 +53,9 @@ def trace(args):
         normalized = counts
     else:
         normalized = counts / total if total else np.zeros_like(counts)
-    contribution = normalized * signs * old * meta['parameters']['gain']
+    gain = float(meta['parameters']['gain'])
+    recurrent_contribution = normalized * signs * old
+    contribution = recurrent_contribution * gain
     frame = pd.DataFrame({'body_pre': ids[cols], 'body_post': args.body, 'synapse_count': counts,
                           'nt_label': labels, 'assumed_sign': signs, 'previous_activity': old,
                           'modeled_signal_contribution': contribution})
@@ -65,7 +68,17 @@ def trace(args):
         drive = float(snapshot['input_values'][snapshot['input_indices'] == row].sum())
         actual = float(state_at(snapshot, np.array([row]))[0])
     leak = meta['parameters']['leak']
-    expected = leak*old_post+(1-leak)*max(0., np.tanh(float(contribution.sum())+drive))
+    bias = float(meta['parameters'].get('bias', 0.))
+    recorded_equation = meta['parameters'].get('equation')
+    if not recorded_equation:
+        recorded_equation = ('leak*h + (1-leak)*maximum(0, tanh(gain*recurrent + sensory + bias))'
+                             if 'max(0' in str(meta.get('equation', '')) else
+                             'leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)')
+    expected = DynamicsExpression(recorded_equation).evaluate(
+        h=np.array([old_post], dtype=np.float32),
+        recurrent=np.array([recurrent_contribution.sum()], dtype=np.float32),
+        sensory=np.array([drive], dtype=np.float32),
+        gain=gain, leak=float(leak), bias=bias)[0]
     out = args.run / 'analysis'
     out.mkdir(exist_ok=True)
     stem = f'trace_frame_{args.frame}_body_{args.body}'
@@ -135,7 +148,8 @@ def trace(args):
             if point_pieces:
                 pa.Table.from_batches(point_pieces).to_pandas().to_csv(out / (stem+'_points.csv'), index=False, encoding='utf-8-sig')
     (out / (stem+'.json')).write_text(json.dumps({'body': args.body, 'frame': args.frame,
-        'previous_state': old_post, 'camera_drive': drive, 'reconstructed_state': float(expected),
+        'previous_state': old_post, 'camera_drive': drive, 'equation': recorded_equation,
+        'reconstructed_state': float(expected),
         'recorded_state': actual, 'original_partner_rows': synapse_rows,
         'note': 'Model signal attribution, not experimental biological causation.'}, indent=2), encoding='utf-8')
     print(f'입력 연결별 신호 기록: {out / (stem+".csv")}', flush=True)

@@ -23,7 +23,11 @@ def test_validator_creates_human_readable_artifacts(tmp_path):
     pd.DataFrame(rows).to_feather(tmp_path / 'annotations.feather')
     effects = {'acetylcholine': 1., 'gaba': -1., 'glutamate': -1., 'histamine': -1.}
     metadata = {'parameters': {'stimulus_onset': 0.}, 'nt': {'modeled_effects': effects},
-                'equation': 'test'}
+                'circuit_report': {'scope': 'photoreceptor_to_leg_motor_structural_corridor',
+                                   'runtime_uses_only_saved_corridor': True,
+                                   'graph_nodes_including_segments': 6, 'csr_edges': 5},
+                'dynamics': {'bias': 0.0, 'matches_flynn_equation': True},
+                'equation': 'leak*h + (1-leak)*tanh(gain*recurrent + sensory + bias)'}
     (tmp_path / 'metadata.json').write_text(json.dumps(metadata), encoding='utf-8')
     events = []
     for frame, (case, scale) in enumerate([('neutral', 1.), ('move_left', 2.), ('move_right', 3.)]):
@@ -39,8 +43,11 @@ def test_validator_creates_human_readable_artifacts(tmp_path):
 
     output = tmp_path / 'signal_chain_validation'
     assert report['verdict'] == '검토 가능'
+    assert report['runtime_uses_only_visual_motor_corridor'] is True
+    assert report['uses_signed_flynn_dynamics'] is True
     for name in ['report.html', 'validation_report.json', 'stage_timeseries.csv',
                  'condition_summary.csv', 'side_summary.csv',
-                 'signal_chain_heatmap.svg', 'left_right_response.svg']:
+                 'signal_chain_heatmap.svg', 'left_right_response.svg',
+                 'extracted_circuit_overview.svg']:
         assert (output / name).is_file()
     assert '시각 입력' in (output / 'report.html').read_text(encoding='utf-8')
